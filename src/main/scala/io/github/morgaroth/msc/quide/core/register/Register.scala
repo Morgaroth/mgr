@@ -1,7 +1,7 @@
 package io.github.morgaroth.msc.quide.core.register
 
 import akka.actor.{ActorRef, ActorSystem, Props}
-import io.github.morgaroth.msc.quide.core.model.Operator
+import io.github.morgaroth.msc.quide.core.model.{QbitValue, Operator}
 import io.github.morgaroth.msc.quide.core.register.Qbit.{OperatorApply, Execute}
 import io.github.morgaroth.msc.quide.core.register.Register.{ReportValue, ExecuteOperator}
 import io.github.morgaroth.msc.quide.core.utilities.actors.QuideActor
@@ -27,7 +27,7 @@ object Register {
 class Register(size: Int) extends QuideActor {
 
   val qbits = 0 until size map { idx =>
-    context.actorOf(Qbit.props(idx), s"q$idx")
+    context.actorOf(Qbit.props(idx, QbitValue.`|0>`), s"q$idx")
   }
 
   var no = 0l

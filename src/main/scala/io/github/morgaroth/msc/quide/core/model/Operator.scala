@@ -19,7 +19,8 @@ trait SingleQbitOperator extends Operator {
   override def size: Int = 1
 
   def apply(qbit: QbitValue): QbitValue = {
-    QbitValue(this (0, 0) * qbit.a + this (0, 1) * qbit.b, this (1, 0) * qbit.a + this (1, 1) * qbit.b)
+    println("apply from base SingleQubit")
+    QbitValue(this (0, 0) * qbit.`a|0>` + this (0, 1) * qbit.`b|1>`, this (1, 0) * qbit.`a|0>` + this (1, 1) * qbit.`b|1>`)
   }
 
 }
@@ -35,7 +36,12 @@ trait IdentityLike extends SingleQbitOperator {
     MatrixPos(1, 1) -> `1`
   )
 
-  override def apply(qbit: QbitValue): QbitValue = qbit
+  override def apply(qbit: QbitValue): QbitValue = {
+    println("apply from I")
+    qbit
+  }
+
+  override def toString: String = "Identity"
 }
 
 object Intentity extends IdentityLike
@@ -56,6 +62,8 @@ trait HadammardLike extends SingleQbitOperator {
     MatrixPos(0, 1) -> `1/p2`,
     MatrixPos(1, 1) -> `-1/p2`
   )
+
+  override def toString: String = "Hadammard"
 }
 
 object Hadammard extends HadammardLike
@@ -72,7 +80,9 @@ trait PauliXLike extends SingleQbitOperator {
 
   // overriden for simplier calculations
   // Pauli X is a `bit flip` gate
-  override def apply(qbit: QbitValue): QbitValue = QbitValue(qbit.b, qbit.a)
+  override def apply(qbit: QbitValue): QbitValue = QbitValue(qbit.`b|1>`, qbit.`a|0>`)
+
+  override def toString: String = "PauliX"
 }
 
 object PauliX extends PauliXLike
@@ -93,7 +103,9 @@ trait PauliYLike extends SingleQbitOperator {
   )
 
   // overriden for simplier calculations
-  override def apply(qbit: QbitValue): QbitValue = QbitValue(`-i` * qbit.b, `1` * qbit.a)
+  override def apply(qbit: QbitValue): QbitValue = QbitValue(`-i` * qbit.`b|1>`, `1` * qbit.`a|0>`)
+
+  override def toString: String = "PauliY"
 }
 
 object PauliY extends PauliYLike
@@ -115,7 +127,9 @@ trait PauliZLike extends SingleQbitOperator {
   )
 
   // overriden for simplier calculations
-  override def apply(qbit: QbitValue): QbitValue = qbit.copy(b = `-1` * qbit.b)
+  override def apply(qbit: QbitValue): QbitValue = qbit.copy(`b|1>` = `-1` * qbit.`b|1>`)
+
+  override def toString: String = "PauliZ"
 }
 
 object PauliZ extends PauliZLike
@@ -156,4 +170,3 @@ object MatrixPos {
 }
 
 case class IntelligentMatrix(size: Int, elements: Map[MatrixPos, Complex])
-

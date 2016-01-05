@@ -10,7 +10,7 @@ import io.github.morgaroth.msc.quide.core.utilities.actors.QuideActor
   * Created by mateusz on 03.01.16.
   */
 object Qbit {
-  def props(index: Int) = Props(classOf[Qbit], index)
+  def props(index: Int, initValue: QbitValue) = Props(classOf[Qbit], index, initValue)
 
   //@formatter:off
   trait Action
