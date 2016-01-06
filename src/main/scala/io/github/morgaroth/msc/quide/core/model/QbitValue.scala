@@ -1,11 +1,12 @@
 package io.github.morgaroth.msc.quide.core.model
 
 import io.github.morgaroth.msc.quide.core.model.Complex._
+import us.bleibinha.spray.json.macros.lazyy.json
 
 /**
   * Created by mateusz on 04.01.16.
   */
-case class QbitValue(`a|0>`: `|0>`, `b|1>`: `|1>`) {
+@json case class QbitValue(`a|0>`: `|0>`, `b|1>`: `|1>`) {
   def apply(o: Operator) = {
     if (o.size == 1) {
       QbitValue(o(0, 0) * `a|0>` + o(0, 1) * `b|1>`, o(1, 0) * `a|0>` + o(1, 1) * `b|1>`)

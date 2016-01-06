@@ -2,10 +2,12 @@ package io.github.morgaroth.msc.quide.core.model
 
 import java.lang.Math._
 
+import us.bleibinha.spray.json.macros.lazyy.json
+
 /**
   * Created by mateusz on 04.01.16.
   */
-case class Complex(re: Double, im: Double) extends Ordered[Complex] {
+@json case class Complex(re: Double, im: Double) extends Ordered[Complex] {
   private val modulus = sqrt(pow(re, 2) + pow(im, 2))
 
   // Constructors
