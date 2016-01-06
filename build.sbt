@@ -9,7 +9,9 @@ libraryDependencies ++= Seq(
   "io.github.morgaroth" %% "utils-akka" % "1.3.0",
   Ficus.Config.`1.1.2`,
   Akka.Actor.`2.4.1`,
+  Akka.Slf4j.`2.4.1`,
   Akka.TestKit.`2.4.1`,
+  Logback.Classic.`1.1.3`,
   ScalaTest.`2.2.4` % "test"
 )
 

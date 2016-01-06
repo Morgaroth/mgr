@@ -13,12 +13,14 @@ case class QbitValue(`a|0>`: `|0>`, `b|1>`: `|1>`) {
   }
 }
 
-object QbitValue {
+trait SimpleQbitValue {
   val `|0>` = QbitValue(`1`, `0`)
   val `|1>` = QbitValue(`0`, `1`)
 }
 
-object QbitValues extends QbitValue.type {
+object QbitValue extends SimpleQbitValue
+
+object QbitValues extends SimpleQbitValue {
   val `|0> after X` = QbitValue.`|1>`
   val `|1> after X` = QbitValue.`|0>`
 
