@@ -19,7 +19,6 @@ trait SingleQbitOperator extends Operator {
   override def size: Int = 1
 
   def apply(qbit: QbitValue): QbitValue = {
-    println("apply from base SingleQubit")
     QbitValue(this (0, 0) * qbit.`a|0>` + this (0, 1) * qbit.`b|1>`, this (1, 0) * qbit.`a|0>` + this (1, 1) * qbit.`b|1>`)
   }
 
@@ -36,10 +35,7 @@ trait IdentityLike extends SingleQbitOperator {
     MatrixPos(1, 1) -> `1`
   )
 
-  override def apply(qbit: QbitValue): QbitValue = {
-    println("apply from I")
-    qbit
-  }
+  override def apply(qbit: QbitValue): QbitValue = qbit
 
   override def toString: String = "Identity"
 }

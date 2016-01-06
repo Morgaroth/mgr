@@ -1,24 +1,18 @@
 package io.github.morgaroth.msc.quide.core.register
 
-import akka.actor.{ActorRef, ActorSystem}
-import akka.testkit.{ImplicitSender, TestKit}
-import io.github.morgaroth.msc.quide.core.model.{X, I}
+import akka.actor.{ActorSystem, ActorRef}
+import io.github.morgaroth.msc.quide.core.BaseQuideActorTest
 import io.github.morgaroth.msc.quide.core.model.QbitValue._
+import io.github.morgaroth.msc.quide.core.model.{I, X}
 import io.github.morgaroth.msc.quide.core.monitoring.CompState.QbitState
-import io.github.morgaroth.msc.quide.core.register.Qbit.{ReportValue, OperatorApply, Execute}
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import io.github.morgaroth.msc.quide.core.register.Qbit.{Execute, OperatorApply, ReportValue}
 
 /**
   * Created by mateusz on 05.01.16.
   */
-class QbitTest(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
-with WordSpecLike with Matchers with BeforeAndAfterAll {
+class QbitTest(as: ActorSystem) extends BaseQuideActorTest(as) {
 
   def this() = this(ActorSystem("QbitTest"))
-
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
-  }
 
   def withActor(code: ActorRef => Unit) = {
     code(system.actorOf(Qbit.props(0, `|0>`)))

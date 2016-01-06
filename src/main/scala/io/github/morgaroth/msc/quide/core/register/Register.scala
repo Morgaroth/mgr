@@ -6,15 +6,19 @@ import io.github.morgaroth.msc.quide.core.register.Qbit.{OperatorApply, Execute}
 import io.github.morgaroth.msc.quide.core.register.Register.{ReportValue, ExecuteOperator}
 import io.github.morgaroth.msc.quide.core.utilities.actors.QuideActor
 
+import QbitValue.`|0>`
+
 /**
   * Created by mateusz on 03.01.16.
   */
 object Register {
-  def create(size: Int = 4)(implicit ac: ActorSystem) = {
-    ac.actorOf(props(size))
-  }
+//  def create(size: Int = 4, initVal: QbitValue = `|0>`)(implicit ac: ActorSystem) = {
+  //    ac.actorOf(props(size, initVal))
+  //  }
 
-  def props(size: Int) = Props(classOf[Register], size)
+  def props(size: Int, initVal: QbitValue = `|0>`) = Props(classOf[Register], List.fill(size)(initVal))
+
+  def props(initlVals: List[QbitValue]) = Props(classOf[Register], initlVals)
 
   //@formatter:off
   case class Step()
@@ -24,10 +28,10 @@ object Register {
 }
 
 
-class Register(size: Int) extends QuideActor {
+class Register(inits: List[QbitValue]) extends QuideActor {
 
-  val qbits = 0 until size map { idx =>
-    context.actorOf(Qbit.props(idx, QbitValue.`|0>`), s"q$idx")
+  val qbits = inits.zipWithIndex map {
+    case (value, idx) => context.actorOf(Qbit.props(idx, value), s"q$idx")
   }
 
   var no = 0l

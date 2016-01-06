@@ -17,3 +17,13 @@ object QbitValue {
   val `|0>` = QbitValue(`1`, `0`)
   val `|1>` = QbitValue(`0`, `1`)
 }
+
+object QbitValues extends QbitValue.type {
+  val `|0> after X` = QbitValue.`|1>`
+  val `|1> after X` = QbitValue.`|0>`
+
+  val `1/p2 1/p2` = QbitValue(`1/p2`, `1/p2`)
+  val `1/p2 -1/p2` = QbitValue(`1/p2`, `-1/p2`)
+  val `|0> after H` = `1/p2 1/p2`
+  val `|1> after H` = `1/p2 -1/p2`
+}
