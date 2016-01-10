@@ -13,7 +13,7 @@ import scala.util.control.NonFatal
 /**
   * Created by mateusz on 06.01.16.
   */
-trait WebApi extends RouteConcatenation with Directives {
+trait WebApi extends RouteConcatenation with Directives  {
   this: CoreActors with Core =>
   private implicit val _ = system.dispatcher
 

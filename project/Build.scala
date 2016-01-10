@@ -18,7 +18,7 @@ object Build extends sbt.Build {
 
   val deploy = System.getenv("DEPLOY") == "true"
   val port = if (deploy) 80 else 8080
-  val optLevel =
+  val optLevel: TaskKey[Attributed[File]] =
     if (deploy) {
       println("[info] Compiling in production mode")
       fullOptJS
@@ -77,20 +77,13 @@ object Build extends sbt.Build {
         Logback.Classic.`1.1.3`,
         Ficus.Config.`1.1.2`,
         "io.github.morgaroth" %% "utils-akka" % "1.3.0"
-        //        ,
-        //        "net.sf.extjwnl" % "extjwnl" % "1.8.1",
-        //        "net.sf.extjwnl" % "extjwnl-data-wn31" % "1.2"
       )
-      //      , mainClass in Revolver.reStart := Some("io.github.morgaroth.msc.quide.core.Application")
     )
     .jsSettings(
       libraryDependencies ++= Seq(
-//        "io.github.widok" %%% "widok" % "0.2.3" withSources() withJavadoc(),
         "com.lihaoyi" %%% "upickle" % "0.3.6",
-        //        "com.lihaoyi" %%% "autowire" % "0.2.5",
         "org.webjars" % "bootstrap-sass" % "3.3.1",
         "org.webjars" % "font-awesome" % "4.3.0-1",
-//        "com.lihaoyi" %%% "scalatags" % "0.5.3",
         "com.github.japgolly.scalajs-react" %%% "extra" % "0.10.0"
       ),
       jsDependencies ++= Seq(

@@ -20,7 +20,7 @@ trait SingleQbitOperator extends Operator {
   override def size: Int = 1
 
   def apply(qbit: QbitValue): QbitValue = {
-    QbitValue(this (0, 0) * qbit.`a|0>` + this (0, 1) * qbit.`b|1>`, this (1, 0) * qbit.`a|0>` + this (1, 1) * qbit.`b|1>`)
+    QbitValue(this (0, 0) * qbit.a_0 + this (0, 1) * qbit.b_1, this (1, 0) * qbit.a_0 + this (1, 1) * qbit.b_1)
   }
 
 }
@@ -77,7 +77,7 @@ trait PauliXLike extends SingleQbitOperator {
 
   // overriden for simplier calculations
   // Pauli X is a `bit flip` gate
-  override def apply(qbit: QbitValue): QbitValue = QbitValue(qbit.`b|1>`, qbit.`a|0>`)
+  override def apply(qbit: QbitValue): QbitValue = QbitValue(qbit.b_1, qbit.a_0)
 
   override def toString: String = "PauliX"
 }
@@ -100,7 +100,7 @@ trait PauliYLike extends SingleQbitOperator {
   )
 
   // overriden for simplier calculations
-  override def apply(qbit: QbitValue): QbitValue = QbitValue(`-i` * qbit.`b|1>`, `1` * qbit.`a|0>`)
+  override def apply(qbit: QbitValue): QbitValue = QbitValue(`-i` * qbit.b_1, `1` * qbit.a_0)
 
   override def toString: String = "PauliY"
 }
@@ -124,7 +124,7 @@ trait PauliZLike extends SingleQbitOperator {
   )
 
   // overriden for simplier calculations
-  override def apply(qbit: QbitValue): QbitValue = qbit.copy(`b|1>` = `-1` * qbit.`b|1>`)
+  override def apply(qbit: QbitValue): QbitValue = qbit.copy(b_1 = `-1` * qbit.b_1)
 
   override def toString: String = "PauliZ"
 }

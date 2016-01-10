@@ -1,7 +1,7 @@
 package io.github.morgaroth.msc.quide.front
 
+import io.github.morgaroth.msc.quide.front.components.Root
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.router._
 import org.scalajs.dom
 
 import scala.scalajs.js.JSApp
@@ -34,6 +34,6 @@ object Main extends JSApp {
     */
   @JSExport
   override def main(): Unit = {
-    val mounted = ReactDOM.render(test.testCompState, dom.document.getElementsByClassName("quide")(0))
+    val mounted = ReactDOM.render(Root(), dom.document.getElementsByClassName("quide")(0))
   }
 }

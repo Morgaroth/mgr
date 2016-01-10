@@ -6,10 +6,10 @@ import io.github.morgaroth.msc.quide.model.operators.Operator
 /**
   * Created by mateusz on 04.01.16.
   */
-case class QbitValue(`a|0>`: `|0>`, `b|1>`: `|1>`) {
+case class QbitValue(a_0: `|0>`, b_1: `|1>`) {
   def apply(o: Operator) = {
     if (o.size == 1) {
-      QbitValue(o(0, 0) * `a|0>` + o(0, 1) * `b|1>`, o(1, 0) * `a|0>` + o(1, 1) * `b|1>`)
+      QbitValue(o(0, 0) * a_0 + o(0, 1) * b_1, o(1, 0) * a_0 + o(1, 1) * b_1)
     } else throw new IllegalArgumentException("Applying only 1-size operators")
   }
 }

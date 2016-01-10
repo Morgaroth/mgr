@@ -1,4 +1,4 @@
-package io.github.morgaroth.msc.quide.front
+package io.github.morgaroth.msc.quide.front.components
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -7,7 +7,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 /**
   * Created by mateusz on 08.01.16.
   */
-object Actioner {
+object CompActions {
 
   object IndexSelector {
     def apply(state: Props) = component(state)
@@ -19,7 +19,7 @@ object Actioner {
     val component = ReactComponentB[Props]("indexControl")
       .render_P { p =>
         p.cur.map[ReactElement](c => <.div(^.id := "menu",
-          <.p(<.b(s"Chose index (current: $c):")),
+          <.b(s"Chose index (current: $c):"),
           <.ul(
             0 until p.size map { x =>
               <.button(x.toString, ^.onClick --> p.change(x))
@@ -40,7 +40,7 @@ object Actioner {
     val component = ReactComponentB[Props]("operatorInput")
       .render_P { s =>
         <.div(^.id := "menu",
-          <.p(<.b(s"Chose operator (current: ${s.cur.get}):")),
+          <.b(s"Chose operator (current: ${s.cur.get}):"),
           <.ul(
             s.available map { x =>
               <.button(
@@ -56,7 +56,7 @@ object Actioner {
 
   case class State(operator: Option[String] = None, qbit: Option[Int] = None)
 
-  case class Props(available: List[String], registerSize: Int)
+  case class Props(available: List[String], registerSize: Int, execute: (String, Int) => Callback)
 
   class Backend($: BackendScope[Props, State]) {
 
@@ -70,31 +70,32 @@ object Actioner {
       $.modState(_.copy(qbit = Some(q)))
     }
 
-    def onDone(state: State) = {
-      Callback {
-        println(s"setting with state $state")
+    def onDone(props: Props) = {
+      $.state.flatMap { s =>
+        println(s"triggering execute of operator with state $s")
+        props.execute(s.operator.get, s.qbit.get)
       }
     }
 
-    //    def componentWillReceiveProps(props:Props) = {
-    //      println(s"new propss $props")
-    //    }
-
     def render(state: State, props: Props) = {
       println(s"rerendering actioner with state $state and props $props")
-      <.div(
-        if (props.available.nonEmpty) OperatorSelector(OperatorSelector.Props(props.available, state.operator, ReusableFn(setOperator))) else <.p("Wait for available operators..."),
-        <.br,
-        if (props.registerSize > 0) IndexSelector(IndexSelector.Props(props.registerSize, state.qbit, ReusableFn(setFirstQbit))) else <.p("Set up register size"),
-        <.br,
-        <.button(s"Execute", ^.onClick --> onDone(state)), <.a(s" operator ${state.operator.getOrElse("")} from qbit ${state.qbit.map(_.toString).getOrElse("")}")
-      )
+      if (state.operator.isDefined && state.qbit.isDefined) {
+        <.div(
+          OperatorSelector(OperatorSelector.Props(props.available, state.operator, ReusableFn(setOperator))),
+          <.br,
+          IndexSelector(IndexSelector.Props(props.registerSize, state.qbit, ReusableFn(setFirstQbit))),
+          <.br,
+          <.button(s"Execute", ^.onClick --> onDone(props)), <.a(s" operator ${state.operator.get} from qbit ${state.qbit.get.toString}")
+        )
+      } else {
+        <.p(s"state $state is empty")
+      }
     }
   }
 
-  val component = ReactComponentB[Props]("input")
+  val component = ReactComponentB[Props]("actions-panel")
     .initialState_P(p => {
-      println("initializing actioner")
+      println("initializing actions panel")
       State(p.available.headOption, if (p.registerSize > 0) Some(0) else None)
     })
     .renderBackend[Backend]
@@ -106,8 +107,10 @@ object Actioner {
     )
     .build
 
-  //  val component = ReactComponentB[Unit]("input")
-
-  def apply(props: Props) = component(props)
+  def apply(
+             available: List[String],
+             registerSize: Int,
+             execute: (String, Int) => Callback) =
+    component(Props(available, registerSize, execute))
 
 }
