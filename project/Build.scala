@@ -1,5 +1,6 @@
 import io.github.morgaroth.sbt.commons.SbtCommons
 import io.github.morgaroth.sbt.commons.SbtCommons.autoImport._
+import sbtassembly.AssemblyPlugin.autoImport._
 import sbt._
 import sbt.Keys._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
@@ -53,8 +54,8 @@ object Build extends sbt.Build {
   lazy val crossProject = CrossProject("server", "client", file("."), CrossType.Full)
     .enablePlugins(SbtWeb, SbtCommons)
     .settings(
-      name := "skeleton",
-      version := "0.1-SNAPSHOT",
+      name := "quide",
+      version := "1.0",
       organization := "io.github.morgaroth.msc.quide",
       scalaVersion := "2.11.7",
       scalacOptions := Seq(
@@ -77,7 +78,8 @@ object Build extends sbt.Build {
         Logback.Classic.`1.1.3`,
         Ficus.Config.`1.1.2`,
         "io.github.morgaroth" %% "utils-akka" % "1.3.0"
-      )
+      ),
+      assemblyJarName in assembly := {s"${name.value}-${version.value}.jar"}
     )
     .jsSettings(
       libraryDependencies ++= Seq(

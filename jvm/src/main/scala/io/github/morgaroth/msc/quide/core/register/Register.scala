@@ -5,17 +5,13 @@ import io.github.morgaroth.msc.quide.core.actors.QuideActor
 import io.github.morgaroth.msc.quide.model.QbitValue
 import io.github.morgaroth.msc.quide.model.QbitValue.`|0>`
 import io.github.morgaroth.msc.quide.model.operators.Operator
-import io.github.morgaroth.msc.quide.core.register.Qbit.{Execute, OperatorApply}
+import io.github.morgaroth.msc.quide.core.register.Qbit.{YourNeighbours, Execute, OperatorApply}
 import io.github.morgaroth.msc.quide.core.register.Register.{ExecuteOperator, ReportValue}
 
 /**
   * Created by mateusz on 03.01.16.
   */
 object Register {
-  //  def create(size: Int = 4, initVal: QbitValue = `|0>`)(implicit ac: ActorSystem) = {
-  //    ac.actorOf(props(size, initVal))
-  //  }
-
   def props(size: Int, initVal: QbitValue = `|0>`) = Props(classOf[Register], List.fill(size)(initVal))
 
   def props(initlVals: List[QbitValue]) = Props(classOf[Register], initlVals)
@@ -30,8 +26,13 @@ object Register {
 
 class Register(inits: List[QbitValue]) extends QuideActor {
 
-  val qbits = inits.zipWithIndex map {
-    case (value, idx) => context.actorOf(Qbit.props(idx, value), s"q$idx")
+  val qbits = {
+    val refs = inits.zipWithIndex map {
+      case (value, idx) => context.actorOf(Qbit.props(idx, value), s"q$idx")
+    }
+    val hello = YourNeighbours(refs)
+    refs.foreach(_ ! hello)
+    refs
   }
 
   var no = 0l
@@ -40,7 +41,7 @@ class Register(inits: List[QbitValue]) extends QuideActor {
     case ExecuteOperator(operator, onQubitNo) =>
       log.info(s"handling operator $operator")
       val receivers = qbits.slice(onQubitNo, onQubitNo + operator.size)
-      val task = Execute(OperatorApply(operator), no)
+      val task = Execute(OperatorApply(operator, onQubitNo), no)
       no += 1
       receivers.foreach(_ ! task)
     case ReportValue(to) =>

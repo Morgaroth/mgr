@@ -11,131 +11,39 @@ import scala.language.implicitConversions
 trait Operator {
   def size: Int
 
-  def apply(row: Int, col: Int): Complex
-
   def elements: Map[MatrixPos, Complex]
-}
 
-trait SingleQbitOperator extends Operator {
-  override def size: Int = 1
+  def isEmpty = elements.isEmpty
 
-  def apply(qbit: QbitValue): QbitValue = {
-    QbitValue(this (0, 0) * qbit.a_0 + this (0, 1) * qbit.b_1, this (1, 0) * qbit.a_0 + this (1, 1) * qbit.b_1)
-  }
+  def apply(row: Int, col: Int): Complex = elements
+    .filterKeys(x => x.row == row && x.col == col)
+    .values.headOption
+    .getOrElse(Complex.`0`)
 
-}
+  lazy val columns_raw = elements.toList.map {
+    case (pos, value) => (pos.col / 2) ->(pos, value)
+  }.groupBy(_._1).mapValues(_.map(_._2))
 
-/*
-  Predefined, well-known operators
- */
-trait IdentityLike extends SingleQbitOperator {
-  override def apply(row: Int, col: Int) = if (row == col) 1 else 0
+  lazy val rows_raw = elements.toList.map {
+    case (pos, value) => (pos.row / 2) ->(pos, value)
+  }.groupBy(_._1).mapValues(_.map(_._2))
 
-  override lazy val elements: Map[MatrixPos, Complex] = Map(
-    MatrixPos(0, 0) -> `1`,
-    MatrixPos(1, 1) -> `1`
+  lazy val columnSubOperators = columns_raw.mapValues(elems =>
+    elems.map { case (pos, value) => (pos.row / 2) ->(pos, value) }
+      .groupBy(_._1)
+      .mapValues(x => SingleQbitOperator(x.map(_._2)))
   )
 
-  override def apply(qbit: QbitValue): QbitValue = qbit
-
-  override def toString: String = "Identity"
-}
-
-object Intentity extends IdentityLike
-
-object I extends IdentityLike
-
-trait HadammardLike extends SingleQbitOperator {
-  override def apply(row: Int, col: Int): Complex = {
-    (row, col) match {
-      case (1, 1) => `-1/p2`
-      case _ => `1/p2`
-    }
-  }
-
-  override lazy val elements: Map[MatrixPos, Complex] = Map(
-    MatrixPos(0, 0) -> `1/p2`,
-    MatrixPos(1, 0) -> `1/p2`,
-    MatrixPos(0, 1) -> `1/p2`,
-    MatrixPos(1, 1) -> `-1/p2`
+  lazy val rowSubOperators = rows_raw.mapValues(elems =>
+    elems.map { case (pos, value) => (pos.col / 2) ->(pos, value) }
+      .groupBy(_._1)
+      .mapValues(x => SingleQbitOperator(x.map(_._2)))
   )
 
-  override def toString: String = "Hadammard"
 }
-
-object Hadammard extends HadammardLike
-
-object H extends HadammardLike
-
-trait PauliXLike extends SingleQbitOperator {
-  override def apply(row: Int, col: Int): Complex = if (row + col == 1) `1` else `0`
-
-  override lazy val elements: Map[MatrixPos, Complex] = Map(
-    MatrixPos(0, 1) -> `1`,
-    MatrixPos(1, 0) -> `1`
-  )
-
-  // overriden for simplier calculations
-  // Pauli X is a `bit flip` gate
-  override def apply(qbit: QbitValue): QbitValue = QbitValue(qbit.b_1, qbit.a_0)
-
-  override def toString: String = "PauliX"
-}
-
-object PauliX extends PauliXLike
-
-object X extends PauliXLike
-
-trait PauliYLike extends SingleQbitOperator {
-  override def apply(row: Int, col: Int): Complex =
-    (row, col) match {
-      case (0, 1) => `-i`
-      case (1, 0) => `i`
-      case _ => `0`
-    }
-
-  override lazy val elements: Map[MatrixPos, Complex] = Map(
-    MatrixPos(0, 1) -> `-i`,
-    MatrixPos(1, 0) -> `i`
-  )
-
-  // overriden for simplier calculations
-  override def apply(qbit: QbitValue): QbitValue = QbitValue(`-i` * qbit.b_1, `1` * qbit.a_0)
-
-  override def toString: String = "PauliY"
-}
-
-object PauliY extends PauliYLike
-
-object Y extends PauliYLike
-
-trait PauliZLike extends SingleQbitOperator {
-  override def apply(row: Int, col: Int): Complex = {
-    (row, col) match {
-      case (0, 0) => `1`
-      case (1, 1) => `-1`
-      case _ => `0`
-    }
-  }
-
-  override lazy val elements: Map[MatrixPos, Complex] = Map(
-    MatrixPos(0, 0) -> `1`,
-    MatrixPos(1, 1) -> `-1`
-  )
-
-  // overriden for simplier calculations
-  override def apply(qbit: QbitValue): QbitValue = qbit.copy(b_1 = `-1` * qbit.b_1)
-
-  override def toString: String = "PauliZ"
-}
-
-object PauliZ extends PauliZLike
-
-object Z extends PauliZLike
-
 
 // TODO next operators (2, 3 qbits, SWAP, CnNOT, itd)
-
+// without sense!
 /*
   Complex operator
  */
