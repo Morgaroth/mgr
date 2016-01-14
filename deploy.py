@@ -100,7 +100,8 @@ def deploy():
     print(ssh(['supervisorctl', 'restart', 'quide']))
     print("Restarted.")
     print("Deploying site...")
-    Popen(['scp', '-r'] + scp_port_param + ['./web/*', "%s:%s/" % (ADDRESS, REMOTE_FRONT_DIR)], shell=True).wait()
+    dir_ = ['scp', '-r'] + scp_port_param + ['./web/*', "%s:%s/" % (ADDRESS, REMOTE_FRONT_DIR)]
+    Popen(' '.join(dir_), shell=True).wait()
     print("Deployed.")
 
 
