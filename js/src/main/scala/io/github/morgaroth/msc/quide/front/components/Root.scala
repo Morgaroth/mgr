@@ -43,7 +43,8 @@ object Root {
   }
 
   val component = ReactComponentB[Unit]("root")
-    .initialState(State("http://localhost:9999", None, None))
+    .initialState(State("http://api.quide.jaje.ninja", None, None))
+//    .initialState(State("http://localhost:9999", None, None))
     .renderBackend[Backend]
     .buildU
 

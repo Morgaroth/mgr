@@ -87,7 +87,7 @@ def deploy_frontend():
 
 def deploy():
     print("Building backend and frontend apps ...")
-    Popen(["sbt", ";clean;server/clean;client/clean;server/assembly;client/fullOptJS"]).wait()
+    Popen(["sbt", ";clean;server/clean;client/clean;server/assembly;client/fullOptJS"], env=environment).wait()
     file = get_backend_artifact()
     filename = os.path.basename(file)
     print("Deploying %s" % file)
@@ -100,7 +100,7 @@ def deploy():
     print(ssh(['supervisorctl', 'restart', 'quide']))
     print("Restarted.")
     print("Deploying site...")
-    Popen(['scp', '-r'] + scp_port_param + ['./web/', "%s:%s/" % (ADDRESS, REMOTE_FRONT_DIR)]).wait()
+    Popen(['scp', '-r'] + scp_port_param + ['./web/*', "%s:%s/" % (ADDRESS, REMOTE_FRONT_DIR)], shell=True).wait()
     print("Deployed.")
 
 

@@ -55,7 +55,7 @@ object Build extends sbt.Build {
     .enablePlugins(SbtWeb, SbtCommons)
     .settings(
       name := "quide",
-      version := "1.0",
+      version := "1.1",
       organization := "io.github.morgaroth.msc.quide",
       scalaVersion := "2.11.7",
       scalacOptions := Seq(
