@@ -75,11 +75,15 @@ object Build extends sbt.Build {
         Spray.Json.`1.3.2`,
         Akka.Actor.`2.4.1`,
         Akka.Slf4j.`2.4.1`,
+        Akka.TestKit.`2.4.1`,
         Logback.Classic.`1.1.3`,
         Ficus.Config.`1.1.2`,
+        ScalaTest.last,
         "io.github.morgaroth" %% "utils-akka" % "1.3.0"
       ),
-      assemblyJarName in assembly := {s"${name.value}-${version.value}.jar"}
+      assemblyJarName in assembly := {
+        s"${name.value}-${version.value}.jar"
+      }
     )
     .jsSettings(
       libraryDependencies ++= Seq(

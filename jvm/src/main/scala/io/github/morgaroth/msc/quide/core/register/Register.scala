@@ -1,20 +1,19 @@
 package io.github.morgaroth.msc.quide.core.register
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.{ActorRef, DeadLetter, Props}
 import io.github.morgaroth.msc.quide.core.actors.QuideActor
-import io.github.morgaroth.msc.quide.model.QbitValue
-import io.github.morgaroth.msc.quide.model.QbitValue.`|0>`
-import io.github.morgaroth.msc.quide.model.operators.Operator
-import io.github.morgaroth.msc.quide.core.register.Qbit.{YourNeighbours, Execute, OperatorApply}
+import io.github.morgaroth.msc.quide.core.register.QState.{Execute, OperatorApply}
 import io.github.morgaroth.msc.quide.core.register.Register.{ExecuteOperator, ReportValue}
+import io.github.morgaroth.msc.quide.model.QValue
+import io.github.morgaroth.msc.quide.model.operators.Operator
 
 /**
   * Created by mateusz on 03.01.16.
   */
 object Register {
-  def props(size: Int, initVal: QbitValue = `|0>`) = Props(classOf[Register], List.fill(size)(initVal))
+  def props(size: Int): Props = props(InitState(List.fill(size)('0').mkString))
 
-  def props(initlVals: List[QbitValue]) = Props(classOf[Register], initlVals)
+  def props(init: InitState): Props = Props(classOf[Register], init)
 
   //@formatter:off
   case class Step()
@@ -23,29 +22,33 @@ object Register {
   //@formatter:on
 }
 
+case class InitState(name: String, value: QValue = QValue.`1`) {
+  val valid: Set[Char] = Set('1', '0')
+  assert(name.forall(valid.contains))
+}
 
-class Register(inits: List[QbitValue]) extends QuideActor {
+class Register(initState: InitState) extends QuideActor {
 
-  val qbits = {
-    val refs = inits.zipWithIndex map {
-      case (value, idx) => context.actorOf(Qbit.props(idx, value), s"q$idx")
-    }
-    val hello = YourNeighbours(refs)
-    refs.foreach(_ ! hello)
-    refs
+  if (initState.name.length > 25) {
+    log.warning(s"too big state, possible OoM Error (current length is ${initState.name.length}")
   }
+
+  // create initial state actor
+  context.actorOf(QState.props(initState.value), initState.name)
+
+  // create zeroState mechanism
+  val zeroState = context.actorOf(ZeroState.props(self.path, context.actorOf))
+  context.system.eventStream.subscribe(zeroState, classOf[DeadLetter])
 
   var no = 0l
 
   override def receive: Receive = {
     case ExecuteOperator(operator, onQubitNo) =>
-      log.info(s"handling operator $operator")
-      val receivers = qbits.slice(onQubitNo, onQubitNo + operator.size)
       val task = Execute(OperatorApply(operator, onQubitNo), no)
       no += 1
-      receivers.foreach(_ ! task)
+      context.children.foreach(_ ! task)
     case ReportValue(to) =>
-      qbits.foreach(_ ! Execute(Qbit.ReportValue(to), no))
+      context.children.foreach(_ ! Execute(QState.ReportValue(to), no))
       no += 1
   }
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.5
 
 from subprocess import *
 import os
@@ -31,7 +31,7 @@ def ssh(command):
     return out
 
 
-def ssh_list(directory: str):
+def ssh_list(directory):
     return ssh(['ls', '-l', directory])
 
 

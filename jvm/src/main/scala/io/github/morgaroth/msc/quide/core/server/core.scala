@@ -7,7 +7,7 @@ trait Core {
 }
 
 trait BootedCore extends Core {
-  implicit lazy val system = ActorSystem("roulette-backend")
+  implicit lazy val system = ActorSystem("quide")
   sys.addShutdownHook(system.terminate())
 }
 

@@ -11,7 +11,7 @@ import io.github.morgaroth.msc.quide.core.monitoring.CompState.GetValue
 import io.github.morgaroth.msc.quide.core.register.Register
 import io.github.morgaroth.msc.quide.core.register.Register.{ExecuteOperator, ReportValue}
 import io.github.morgaroth.msc.quide.http.{CreateCPUReq, CreateCPURes, ExecuteOperatorReq}
-import io.github.morgaroth.msc.quide.model.QbitValue
+import io.github.morgaroth.msc.quide.model.QValue
 import io.github.morgaroth.msc.quide.model.operators._
 import spray.http.StatusCodes
 import spray.httpx.SprayJsonSupport
@@ -66,7 +66,7 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
     }
     cpus.get(id) map[ToResponseMarshallable] { case (register, s) =>
       val listener = as.actorOf(CompState.props(s.size))
-      val result = (listener ? GetValue).mapTo[Map[Int, QbitValue]].map(_.map(x => x._1.toString -> x._2))
+      val result = (listener ? GetValue).mapTo[Map[String, QValue]].map(_.toList)
       register ! ExecuteOperator(o, req.index)
       register ! ReportValue(listener)
       result
@@ -85,7 +85,7 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
   def getCPUValue(cpuId: UUID): ToResponseMarshallable = {
     cpus.get(cpuId) map[ToResponseMarshallable] { case (register, s) =>
       val listener = as.actorOf(CompState.props(s.size))
-      val result: Future[Map[String, QbitValue]] = (listener ? GetValue).mapTo[Map[Int, QbitValue]].map(_.map(x => x._1.toString -> x._2))
+      val result = (listener ? GetValue).mapTo[Map[String, QValue]].map(_.toList)
       register ! ReportValue(listener)
       result
     } getOrElse StatusCodes.BadRequest

@@ -6,5 +6,6 @@ package io.github.morgaroth.msc.quide
 package object model {
   type `|0>` = Complex
   type `|1>` = Complex
-
+  type QValue = Complex
+  val QValue = Complex
 }

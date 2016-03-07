@@ -1,130 +1,128 @@
 package io.github.morgaroth.msc.quide.model.operators
 
 import io.github.morgaroth.msc.quide.model.Complex._
-import io.github.morgaroth.msc.quide.model.{Complex, QbitValue}
+import io.github.morgaroth.msc.quide.model.QValue
 
 /**
   * Created by mateusz on 11.01.16.
   */
 
 trait SingleQbitOperator extends Operator {
+  def execute(myValue: QValue, othValue: QValue, myQbit: Char): QValue = {
+    myQbit match {
+      case '0' => executeFor0(myValue, othValue)
+      case '1' => executeFor1(othValue, myValue)
+    }
+  }
+
+  private def throwInfo = throw new NotImplementedError("You have to override some logic here! Either execute (not using executeFor* methods), or both executeFor* methods.")
+
+  protected def executeFor0(ampl0: QValue, ampl1: QValue): QValue = throwInfo
+
+  protected def executeFor1(ampl0: QValue, ampl1: QValue): QValue = throwInfo
+
   override def size: Int = 1
-
-  def apply(qbit: QbitValue): QbitValue = {
-    QbitValue(this (0, 0) * qbit.a_0 + this (0, 1) * qbit.b_1, this (1, 0) * qbit.a_0 + this (1, 1) * qbit.b_1)
-  }
-}
-
-object SingleQbitOperator {
-  def apply(elems: List[(MatrixPos, Complex)], name: String = null) = new SingleQbitOperator {
-    override def elements: Map[MatrixPos, Complex] = elems.toMap
-
-    override def toString: String = Option(name).getOrElse(super.toString)
-  }
 }
 
 /*
   Predefined, well-known operators
  */
 trait IdentityLike extends SingleQbitOperator {
-  override def apply(row: Int, col: Int) = if (row == col) 1 else 0
-
-  override lazy val elements: Map[MatrixPos, Complex] = Map(
-    MatrixPos(0, 0) -> `1`,
-    MatrixPos(1, 1) -> `1`
-  )
-
-  override def apply(qbit: QbitValue): QbitValue = qbit
-
   override def toString: String = "Identity"
+
+  override def execute(myValue: QValue, othValue: QValue, myQbit: Char): QValue = myValue
 }
 
 object Intentity extends IdentityLike
 
 object I extends IdentityLike
 
+/*
+  Haddammard Gate
+
+       | 1    1 |
+  1/p2 |        |
+       | 1   -1 |
+*/
 trait HadammardLike extends SingleQbitOperator {
-  override def apply(row: Int, col: Int): Complex = {
-    (row, col) match {
-      case (1, 1) => `-1/p2`
-      case _ => `1/p2`
-    }
-  }
-
-  override lazy val elements: Map[MatrixPos, Complex] = Map(
-    MatrixPos(0, 0) -> `1/p2`,
-    MatrixPos(1, 0) -> `1/p2`,
-    MatrixPos(0, 1) -> `1/p2`,
-    MatrixPos(1, 1) -> `-1/p2`
-  )
-
   override def toString: String = "Hadammard"
+
+  //     | ampl0 |
+  // H * |       |
+  //     | ampl1 |
+  override protected def executeFor0(ampl0: QValue, ampl1: QValue) = (ampl0 + ampl1) * `1/p2`
+
+  override protected def executeFor1(ampl0: QValue, ampl1: QValue) = (ampl0 - ampl1) * `1/p2`
+
 }
 
 object Hadammard extends HadammardLike
 
 object H extends HadammardLike
 
+
+/*
+  Pauli X Gate
+
+      | 0   1 |
+  X = |       |
+      | 1   0 |
+*/
 trait PauliXLike extends SingleQbitOperator {
-  override def apply(row: Int, col: Int): Complex = if (row + col == 1) `1` else `0`
-
-  override lazy val elements: Map[MatrixPos, Complex] = Map(
-    MatrixPos(0, 1) -> `1`,
-    MatrixPos(1, 0) -> `1`
-  )
-
-  // overriden for simplier calculations
-  // Pauli X is a `bit flip` gate
-  override def apply(qbit: QbitValue): QbitValue = QbitValue(qbit.b_1, qbit.a_0)
-
   override def toString: String = "PauliX"
+
+  //     | ampl0 |
+  // X * |       |
+  //     | ampl1 |
+  override protected def executeFor0(ampl0: QValue, ampl1: QValue): QValue = ampl1
+
+  override protected def executeFor1(ampl0: QValue, ampl1: QValue): QValue = ampl0
 }
 
 object PauliX extends PauliXLike
 
 object X extends PauliXLike
 
+
+/*
+  Pauli Y Gate
+
+      | 0  -i |
+  Y = |       |
+      | i   0 |
+*/
 trait PauliYLike extends SingleQbitOperator {
-  override def apply(row: Int, col: Int): Complex =
-    (row, col) match {
-      case (0, 1) => `-i`
-      case (1, 0) => `i`
-      case _ => `0`
-    }
-
-  override lazy val elements: Map[MatrixPos, Complex] = Map(
-    MatrixPos(0, 1) -> `-i`,
-    MatrixPos(1, 0) -> `i`
-  )
-
-  // overriden for simplier calculations
-  override def apply(qbit: QbitValue): QbitValue = QbitValue(`-i` * qbit.b_1, `1` * qbit.a_0)
-
   override def toString: String = "PauliY"
+
+  //     | ampl0 |
+  // Y * |       |
+  //     | ampl1 |
+  override protected def executeFor0(ampl0: QValue, ampl1: QValue): QValue = ampl1 * `-i`
+
+  override protected def executeFor1(ampl0: QValue, ampl1: QValue): QValue = ampl0 * `i`
 }
 
 object PauliY extends PauliYLike
 
 object Y extends PauliYLike
 
+
+/*
+  Pauli Z Gate
+
+      | 1   0 |
+  Z = |       |
+      | 0  -1 |
+*/
 trait PauliZLike extends SingleQbitOperator {
-  override def apply(row: Int, col: Int): Complex = {
-    (row, col) match {
-      case (0, 0) => `1`
-      case (1, 1) => `-1`
-      case _ => `0`
-    }
-  }
-
-  override lazy val elements: Map[MatrixPos, Complex] = Map(
-    MatrixPos(0, 0) -> `1`,
-    MatrixPos(1, 1) -> `-1`
-  )
-
-  // overriden for simplier calculations
-  override def apply(qbit: QbitValue): QbitValue = qbit.copy(b_1 = `-1` * qbit.b_1)
-
   override def toString: String = "PauliZ"
+
+  //     | ampl0 |
+  // Z * |       |
+  //     | ampl1 |
+  override protected def executeFor0(ampl0: QValue, ampl1: QValue): QValue = ampl0
+
+  override protected def executeFor1(ampl0: QValue, ampl1: QValue): QValue = -ampl1
 }
 
 object PauliZ extends PauliZLike
