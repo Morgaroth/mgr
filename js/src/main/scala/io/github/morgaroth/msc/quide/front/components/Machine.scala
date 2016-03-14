@@ -70,9 +70,7 @@ object Machine {
               showSearchBox = false,
               onItemSelect = onCpuSizeSelected,
               style = DefaultStyle
-            ),
-            <.button(s"new ${s.size}qbits processor", ^.onClick --> createNew),
-            <.button("refresh", ^.onClick --> refresh)
+            )
           ),
           <.div(
             <.strong("Available CPUs:"),
@@ -85,6 +83,9 @@ object Machine {
           )
         ),
         <.hr,
+        <.button(s"new ${s.size}qbits processor", ^.onClick --> createNew),
+        <.button("refresh", ^.onClick --> refresh),
+        <.br, <.br,
         <.strong(
           ^.id := "listviewcontent",
           s.selectedCPU.map[TagMod](x => s"Selected CPU: ${x.id}, ${x.size}qbits").getOrElse("Selected Content Here")
