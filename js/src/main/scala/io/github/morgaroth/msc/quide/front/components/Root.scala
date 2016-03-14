@@ -15,12 +15,10 @@ object Root {
   class Backend($: BackendScope[_, State]) {
 
     def newCPU(d: CPU) = {
-      println(s"updating Root state with $d")
       $.modState(_.copy(cpuId = Some(d.id), cpuSize = Some(d.size)))
     }
 
     def setServiceAddressTo(str: String): Callback = {
-      println(s"updating state to $str")
       $.modState(_.copy(serviceUrl = str))
     }
 
