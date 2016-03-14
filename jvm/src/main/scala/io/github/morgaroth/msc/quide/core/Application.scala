@@ -1,13 +1,11 @@
 package io.github.morgaroth.msc.quide.core
 
-import java.io.File
-
 import akka.event.Logging
 import akka.io.IO
 import com.typesafe.config.ConfigFactory
 import io.github.morgaroth.msc.quide.core.server.{BootedCore, Core, CoreActors, WebApi}
-import spray.can.Http
 import net.ceedubs.ficus.Ficus._
+import spray.can.Http
 
 /**
   * Created by mateusz on 03.01.16.

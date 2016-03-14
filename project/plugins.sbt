@@ -6,7 +6,7 @@ resolvers += Resolver.url("GitHub repository", url("http://shaggyyeti.github.io/
 
 addSbtPlugin("default" % "sbt-sass" % "0.1.9")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.4")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.7")
 
 addSbtPlugin("io.github.morgaroth" % "sbt-commons" % "0.17")
 

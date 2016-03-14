@@ -1,6 +1,6 @@
 package io.github.morgaroth.msc.quide.front.components
 
-import io.github.morgaroth.msc.quide.model.QbitValue
+import io.github.morgaroth.msc.quide.model.QValue
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -9,14 +9,12 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object Qbit {
 
-  val component = ReactComponentB[QbitValue]("Qbit")
+  val component = ReactComponentB[(String, QValue)]("Qbit")
     .render_P { d =>
       <.div(
-        Complex(d.a_0),
-        <.br,
-        Complex(d.b_1)
+        "<",<.b(d._1), "| — ", Complex(d._2)
       )
     }.build
 
-  def apply(a: QbitValue) = component(a)
+  def apply(a: (String, QValue)) = component(a)
 }

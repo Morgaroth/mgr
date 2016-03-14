@@ -10,16 +10,16 @@ import io.github.morgaroth.msc.quide.core.monitoring.CompState
 import io.github.morgaroth.msc.quide.core.monitoring.CompState.GetValue
 import io.github.morgaroth.msc.quide.core.register.Register
 import io.github.morgaroth.msc.quide.core.register.Register.{ExecuteOperator, ReportValue}
-import io.github.morgaroth.msc.quide.http.{CreateCPUReq, CreateCPURes, ExecuteOperatorReq}
+import io.github.morgaroth.msc.quide.http.{CreateCPUReq, CPU, ExecuteOperatorReq}
 import io.github.morgaroth.msc.quide.model.QValue
 import io.github.morgaroth.msc.quide.model.operators._
 import spray.http.StatusCodes
 import spray.httpx.SprayJsonSupport
 import spray.httpx.marshalling.ToResponseMarshallable
-import spray.routing.{Route, Directives}
+import spray.routing.Directives
 
 import scala.collection.mutable
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 /**
@@ -34,25 +34,25 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
 
   override val pathEnd = pathEndOrSingleSlash
 
-  val cpus = mutable.Map.empty[UUID, (ActorRef, CreateCPURes)]
+  val cpus = mutable.Map.empty[UUID, (ActorRef, CPU)]
 
   //@formatter:off
   val route =
     pathEnd {
       get(complete(getAvailableCPUS)) ~
-      post(handleWith(createNewCPU))
+        post(handleWith(createNewCPU))
     } ~
-    pathPrefix(JavaUUID) { cpuId =>
-      pathEnd {
-        get(complete(getCPUValue(cpuId))) ~
-        post(handleWith(handleOperation(cpuId)))
+      pathPrefix(JavaUUID) { cpuId =>
+        pathEnd {
+          get(complete(getCPUValue(cpuId))) ~
+            post(handleWith(handleOperation(cpuId)))
+        }
+      } ~
+      pathPrefix("operators") {
+        pathEnd {
+          get(complete(List("H", "X", "Y", "Z", "I")))
+        }
       }
-    } ~
-    pathPrefix("operators") {
-      pathEnd {
-        get(complete(List("H", "X", "Y", "Z", "I")))
-      }
-    }
   //@formatter:on
 
   def handleOperation(id: UUID)(req: ExecuteOperatorReq): ToResponseMarshallable = {
@@ -65,11 +65,13 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
       case "z" | "pauliz" => Z
     }
     cpus.get(id) map[ToResponseMarshallable] { case (register, s) =>
-      val listener = as.actorOf(CompState.props(s.size))
-      val result = (listener ? GetValue).mapTo[Map[String, QValue]].map(_.toList)
       register ! ExecuteOperator(o, req.index)
-      register ! ReportValue(listener)
-      result
+      akka.pattern.after(1.second, as.scheduler){
+        val listener = as.actorOf(CompState.props(s.size))
+        val result = (listener ? GetValue).mapTo[Map[String, QValue]]
+        register ! ReportValue(listener)
+        result
+      }
     } getOrElse StatusCodes.BadRequest
   }
 
@@ -77,7 +79,7 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
     log.info("createing cpu")
     val id = UUID.randomUUID()
     val ref = as.actorOf(Register.props(req.size))
-    val resp = CreateCPURes(req.size, id.toString)
+    val resp = CPU(req.size, id.toString)
     cpus += id ->(ref, resp)
     resp
   }
@@ -85,7 +87,7 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
   def getCPUValue(cpuId: UUID): ToResponseMarshallable = {
     cpus.get(cpuId) map[ToResponseMarshallable] { case (register, s) =>
       val listener = as.actorOf(CompState.props(s.size))
-      val result = (listener ? GetValue).mapTo[Map[String, QValue]].map(_.toList)
+      val result = (listener ? GetValue).mapTo[Map[String, QValue]]
       register ! ReportValue(listener)
       result
     } getOrElse StatusCodes.BadRequest

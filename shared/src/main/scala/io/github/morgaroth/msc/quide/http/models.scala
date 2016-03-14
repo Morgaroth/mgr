@@ -7,4 +7,4 @@ case class ExecuteOperatorReq(operator: String, index: Int)
 
 case class CreateCPUReq(size: Int)
 
-case class CreateCPURes(size: Int, id: String)
+case class CPU(size: Int, id: String)

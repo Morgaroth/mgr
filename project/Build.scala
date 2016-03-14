@@ -87,10 +87,14 @@ object Build extends sbt.Build {
     )
     .jsSettings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "upickle" % "0.3.6",
+        "com.lihaoyi" %%% "upickle" % "0.3.8",
         "org.webjars" % "bootstrap-sass" % "3.3.1",
         "org.webjars" % "font-awesome" % "4.3.0-1",
-        "com.github.japgolly.scalajs-react" %%% "extra" % "0.10.0"
+        "com.github.japgolly.scalajs-react" %%% "extra" % "0.10.4",
+        "com.github.chandu0101.scalajs-react-components" %%% "core" % "0.4.1",
+        "com.github.japgolly.scalacss" %%% "ext-react" % "0.3.2",
+        "com.github.japgolly.scalacss" %%% "core" % "0.3.2"
+
       ),
       jsDependencies ++= Seq(
         "org.webjars.npm" % "react" % "0.14.0" / "react-with-addons.js" commonJSName "React" minified "react-with-addons.min.js",

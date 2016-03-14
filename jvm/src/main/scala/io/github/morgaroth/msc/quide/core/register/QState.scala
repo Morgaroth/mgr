@@ -1,8 +1,6 @@
 package io.github.morgaroth.msc.quide.core.register
 
-import javax.swing.SwingWorker.StateValue
-
-import akka.actor.{ActorPath, ActorRef, Props}
+import akka.actor.{ActorRef, Props, Stash}
 import io.github.morgaroth.msc.quide.core.actors.QuideActor
 import io.github.morgaroth.msc.quide.core.monitoring.CompState.StateAmplitude
 import io.github.morgaroth.msc.quide.core.register.QState.{Execute, MyAmplitude, OperatorApply, ReportValue}
@@ -17,23 +15,32 @@ object QState {
 
   //@formatter:off
   trait Action
-  case class OperatorApply(operator: Operator, firstQbit:Int) extends Action
+
+  case class OperatorApply(operator: Operator, firstQbit: Int) extends Action
+
   case class ReportValue(to: ActorRef) extends Action
+
   case class Execute(action: Action, taskNo: Long)
-  case class MyAmplitude(ampl: QValue)
+
+  case class MyAmplitude(ampl: QValue, op: OperatorApply, taskNo: Long)
+
   //@formatter:on
 
 
   def props(init: QValue = QValue.`0`) = Props(classOf[QState], init)
 }
 
-class QState(init: QValue) extends QuideActor {
+class QState(init: QValue) extends QuideActor with Stash {
   val register = self.path.parent
   val myName = self.path.name
   val deadAmplitude = QValue.`0`
 
   var amplitude: QValue = init
   var lastNo = -1l
+
+  def loginfo(msg: String) = {
+    log.info(s"|$myName> -$msg")
+  }
 
   def ShallIDead() = {
     if (amplitude <= deadAmplitude) {
@@ -43,25 +50,28 @@ class QState(init: QValue) extends QuideActor {
   }
 
   def executing(operator: SingleQbitOperator, myQbit: Char): Receive = {
-    case MyAmplitude(ampl) =>
-      log.info(s"received oppose amplitude $ampl from ${sender()}")
+    case MyAmplitude(ampl, _, _) =>
+      loginfo(s"received oppose amplitude $ampl from ${sender()}")
       amplitude = operator.execute(amplitude, ampl, myQbit)
       if (!ShallIDead()) {
         context become receive
+        unstashAll()
       } else {
-        log.info("I'm dying...")
+        loginfo("I'm dying...")
       }
+    case _ =>
+      stash()
   }
 
   override def receive: Receive = {
-    case Execute(OperatorApply(operator: SingleQbitOperator, index), no) =>
-      log.info(s"applying 1-qbit operator $operator.(no $no)")
+    case Execute(o@OperatorApply(operator: SingleQbitOperator, index), no) =>
+      loginfo(s"applying 1-qbit operator $operator.(no $no)")
       lastNo = no
       val (myQbit, opposedState) = findOpposedState(index)
       context become executing(operator, myQbit)
-      context.actorSelection(register / opposedState) ! MyAmplitude(amplitude)
+      context.actorSelection(register / opposedState) ! MyAmplitude(amplitude, o, no)
     case Execute(ReportValue(to), no) =>
-      log.info(s"sending value to reporter.(no $no)")
+      loginfo(s"sending value to reporter.(no $no)")
       to ! StateAmplitude(myName, amplitude, -1)
       lastNo = no
 

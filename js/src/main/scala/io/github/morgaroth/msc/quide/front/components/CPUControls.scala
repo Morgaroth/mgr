@@ -1,14 +1,11 @@
 package io.github.morgaroth.msc.quide.front.components
 
 import io.github.morgaroth.msc.quide.front.api.Api
-import io.github.morgaroth.msc.quide.http.ExecuteOperatorReq
-import io.github.morgaroth.msc.quide.model.QbitValue
+import io.github.morgaroth.msc.quide.model.QValue
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import org.scalajs.dom.ext.Ajax
-import upickle.default._
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /**
   * Created by mateusz on 09.01.16.
@@ -19,15 +16,16 @@ object CPUControls {
 
   case class State(
                     operators: List[String],
-                    register: List[QbitValue],
+                    register: List[(String, QValue)],
                     lastOperation: Int
                   ) {
     def size = register.size
   }
 
+
   class Backend($: BackendScope[Props, State]) {
 
-    def updateRegister(lastNo: Int, newValue: List[QbitValue]) = {
+    def updateRegister(lastNo: Int, newValue: List[(String,QValue)]) = {
       $.modState(_.copy(register = newValue, lastOperation = lastNo))
     }
 
@@ -35,7 +33,7 @@ object CPUControls {
       $.props.flatMap(p => Callback {
         Api.getCPUState(p.url, p.cpuId).map { d =>
           println(s"state of ${p.cpuId} is $d")
-          $.modState(_.copy(register = d.toList.sortBy(_._1.toInt).map(_._2))).runNow()
+          $.modState(_.copy(register = d.toList.sortBy(_._1))).runNow()
         }
       })
     }
@@ -44,7 +42,7 @@ object CPUControls {
       $.props.flatMap(p => Callback(
         Api.executeOperator(p.url, p.cpuId, o, i).map { response =>
           println(s"state of ${p.cpuId} is $response")
-          $.modState(_.copy(register = response.toList.sortBy(_._1.toInt).map(_._2))).runNow()
+          $.modState(_.copy(register = response.toList.sortBy(_._1))).runNow()
         }
       ))
     }
@@ -54,7 +52,7 @@ object CPUControls {
       <.div(
         CompState(state.register),
         <.br,
-        CompActions(state.operators, state.size, executeOperator)
+        CompActions(state.operators, props.cpuSize, executeOperator)
       )
     }
   }
@@ -76,7 +74,7 @@ object CPUControls {
       Callback {
         Api.getCPUState(p.url, p.cpuId).map { d =>
           println(s"state of ${p.cpuId} is $d")
-          mod(_.copy(register = d.toList.sortBy(_._1.toInt).map(_._2))).runNow()
+          mod(_.copy(register = d.toList.sortBy(_._1))).runNow()
         }
       }
     }
