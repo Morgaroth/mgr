@@ -64,7 +64,6 @@ object Machine {
         <.div(
           ^.display := "inline-flex",
           <.div(
-            //          ^.width := "50%",
             <.strong("New processor size:"),
             ReactListView(
               items = 1 to 20 map (x => s"$x qbits") toList,
@@ -76,7 +75,6 @@ object Machine {
             <.button("refresh", ^.onClick --> refresh)
           ),
           <.div(
-            //          ^.width := "50%",
             <.strong("Available CPUs:"),
             ReactListView(
               items = s.availableCPUS.map(x => s"${x.id}, ${x.size}qbits"),
