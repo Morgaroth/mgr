@@ -7,6 +7,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.~=>
 import japgolly.scalajs.react.vdom.prefix_<^._
 
+import scala.concurrent.Future
 import scala.language.postfixOps
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
@@ -19,43 +20,55 @@ object Machine {
 
   case class Props(serviceUrl: String, useCPU: CPU ~=> Callback)
 
-  case class State(availableCPUS: List[CPU] = List.empty, size: Int = 1, selectedCPU: Option[CPU] = None) {
+  case class State(availableCPUS: List[CPU] = List.empty, size: Int = 1, selectedCPU: Option[CPU] = None, refreshNeed: Boolean = false) {
     def avaliableNotSelected = selectedCPU.map(x => availableCPUS.filterNot(_ == x)).getOrElse(availableCPUS)
   }
 
   class Backend($: BackendScope[Props, State]) {
 
-    def refresh: CallbackTo[Unit] = {
-      $.props.flatMap(p => Callback {
-        Api.listCPUs(p.serviceUrl).map { d =>
-          $.modState(_.copy(availableCPUS = d)).runNow()
-        }
-      })
+    def p_s: CallbackTo[(Props, State)] = $.props zip $.state
+
+    def refresh(s: State, p: Props) = Callback {
+      println(s"Refreshing list with local $s and $p")
+      Api.listCPUs(p.serviceUrl).map { d =>
+        $.modState(s => s.copy(availableCPUS = d, selectedCPU = if (d.isEmpty) None else s.selectedCPU))
+      }
     }
 
-    val onCPUSelected = (item: String) => Callback {
-      //      dom.document.getElementById("listviewcontent").innerHTML = s"Selected CPU: $item <br>"
+    def refresh: CallbackTo[Unit] = {
+      println(s"Refreshing list with local state and props")
+      Callback($.props.flatMap(p => Callback {
+        Api.listCPUs(p.serviceUrl).map { d =>
+          $.modState(s => s.copy(availableCPUS = d, selectedCPU = if (d.isEmpty) None else s.selectedCPU))
+        }
+      }).runNow())
+    }
+
+    val onCPUSelected = (item: String) => {
       $.props.flatMap { props =>
-        $.state.flatMap { state =>
+        $.modState { state =>
           val id = item.takeWhile(_ != ',')
           val cpu = state.availableCPUS.find(_.id == id).get
-          $.modState(_.copy(selectedCPU = Some(cpu))).flatMap(_ => props.useCPU(cpu))
+          state.copy(selectedCPU = Some(cpu))
         }
-      }.runNow()
+      }
     }
 
     val onCpuSizeSelected = (item: String) => {
-      Callback($.modState(_.copy(size = item.takeWhile(_ != ' ').toInt)).runNow())
+      $.modState(_.copy(size = item.takeWhile(_ != ' ').toInt))
     }
 
-    def createNew: Callback = {
-      $.props.flatMap { p =>
-        $.state.flatMap(s => Callback {
-          Api.createCPU(p.serviceUrl, s.size).map { d =>
-            $.modState(_.copy(selectedCPU = Some(d))).flatMap(_ => p.useCPU(d))
-          }
-        })
-      }.flatMap(_ => refresh)
+    def createNew: Callback = p_s.flatMap {
+      case (props, state) => Callback.future {
+        createAndGetList(props, state) map {
+          case (created: CPU, newlist: List[CPU]) =>
+            $.modState(_.copy(availableCPUS = newlist, selectedCPU = Some(created)), props.useCPU(created))
+        }
+      }
+    }
+
+    def createAndGetList(p: Props, s: State): Future[(CPU, List[CPU])] = {
+      Api.createCPU(p.serviceUrl, s.size) flatMap (x => Api.listCPUs(p.serviceUrl).map(x -> _))
     }
 
     def render(p: Props, s: State) = {
@@ -100,11 +113,23 @@ object Machine {
     }
   }
 
+  val whenUpdate: (ComponentWillUpdate[Props, State, Backend, TopNode]) => Callback = {
+    f =>
+      Callback {
+        println("when update:")
+        println(s"     f.$$.state = ${f.$.state}")
+        println(s"     f.$$.props = ${f.$.props}")
+        println(s"     f.$$.nextState = ${f.nextState}")
+        println(s"     f.$$.nextProps = ${f.nextProps}")
+      }
+  }
+
   val component = ReactComponentB[Props]("u")
     .initialState(State())
     .renderBackend[Backend]
     .componentDidMount { f => init(f.props, f.modState(_: State => State)) }
-    .componentWillReceiveProps { f => init(f.nextProps, f.$.modState(_: State => State)) }
+    //    .componentWillReceiveProps { f => init(f.nextProps, f.$.modState(_: State => State)) }
+    //    .componentWillUpdate(whenUpdate)
     .build
 
   def apply(url: String, useCPU: CPU ~=> Callback) = component(Props(url, useCPU))

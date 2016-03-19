@@ -8,7 +8,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 /**
   * Created by mateusz on 09.01.16.
   */
-object Root {
+object  Root {
 
   case class State(serviceUrl: String, cpuId: Option[String], cpuSize: Option[Int])
 
@@ -30,6 +30,7 @@ object Root {
           <.button("localhost", ^.onClick --> setServiceAddressTo("http://localhost:9999")),
           <.button("jaje.ninja", ^.onClick --> setServiceAddressTo("http://api.quide.jaje.ninja"))
         ),
+        <.br,
         Machine(state.serviceUrl, ReusableFn(newCPU)),
         <.br,
         (state.cpuId, state.cpuSize) match {
