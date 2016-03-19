@@ -44,13 +44,14 @@ object Machine {
       }).runNow())
     }
 
+    def findCpu(item: String, state: State): CPU = {
+      val id = item.takeWhile(_ != ',')
+      state.availableCPUS.find(_.id == id).get
+    }
+
     val onCPUSelected = (item: String) => {
-      $.props.flatMap { props =>
-        $.modState { state =>
-          val id = item.takeWhile(_ != ',')
-          val cpu = state.availableCPUS.find(_.id == id).get
-          state.copy(selectedCPU = Some(cpu))
-        }
+      p_s flatMap { case (props, state) =>
+        $.modState(s => s.copy(selectedCPU = Some(findCpu(item, s))), props.useCPU(findCpu(item, state)))
       }
     }
 
