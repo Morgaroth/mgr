@@ -32,7 +32,7 @@ trait marshallers extends DefaultJsonProtocol {
     }
   }
 
-  implicit lazy val controlledOperatorJsonFormat: RootJsonFormat[ControlledGate] = jsonFormat3(ControlledGate)
+  implicit lazy val controlledOperatorJsonFormat: RootJsonFormat[ControlledGate] = jsonFormat2(ControlledGate)
 
 
   implicit object OperatorJsonFormat extends JsonFormat[Gate] {

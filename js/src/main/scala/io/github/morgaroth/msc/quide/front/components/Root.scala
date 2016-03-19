@@ -8,11 +8,11 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 /**
   * Created by mateusz on 09.01.16.
   */
-object  Root {
+object Root {
 
   case class State(serviceUrl: String, cpuId: Option[String], cpuSize: Option[Int])
 
-  class Backend($: BackendScope[_, State]) {
+  class Backend($: BackendScope[String, State]) {
 
     def newCPU(d: CPU) = {
       $.modState(_.copy(cpuId = Some(d.id), cpuSize = Some(d.size)))
@@ -22,7 +22,7 @@ object  Root {
       $.modState(_.copy(serviceUrl = str))
     }
 
-    def render(state: State) = {
+    def render(state: State, props: String) = {
       <.div(
         <.div(
           <.a("service url: ", <.b(state.serviceUrl)),
@@ -41,11 +41,11 @@ object  Root {
     }
   }
 
-  val component = ReactComponentB[Unit]("root")
+  val component = ReactComponentB[String]("root")
     //    .initialState(State("http://api.quide.jaje.ninja", None, None))
-    .initialState(State("http://localhost:9999", None, None))
+    .initialState_P(url => State(if (url.contains("localhost")) "http://localhost:9999" else "http://api.quide.jaje.ninja", None, None))
     .renderBackend[Backend]
-    .buildU
+    .build
 
-  def apply() = component()
+  def apply(href: String) = component(href)
 }

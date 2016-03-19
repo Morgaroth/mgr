@@ -15,7 +15,8 @@ object Main extends JSApp {
   @JSExport
   override def main(): Unit = {
     MainCSS.load()
-    val mounted = ReactDOM.render(Root(), dom.document.getElementsByClassName("quide")(0))
+    dom.window.location.href
+    val mounted = ReactDOM.render(Root(dom.window.location.href), dom.document.getElementsByClassName("quide")(0))
   }
 }
 
