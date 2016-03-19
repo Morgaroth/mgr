@@ -5,7 +5,7 @@ import io.github.morgaroth.msc.quide.core.actors.QuideActor
 import io.github.morgaroth.msc.quide.core.monitoring.CompState.StateAmplitude
 import io.github.morgaroth.msc.quide.core.register.QState.{Execute, MyAmplitude, OperatorApply, ReportValue}
 import io.github.morgaroth.msc.quide.model.QValue
-import io.github.morgaroth.msc.quide.model.operators.{Operator, SingleQbitOperator}
+import io.github.morgaroth.msc.quide.model.operators.{ControlledGate, Operator, SingleQbitOperator}
 
 /**
   * Created by mateusz on 07.03.16.
@@ -70,6 +70,16 @@ class QState(init: QValue) extends QuideActor with Stash {
       val (myQbit, opposedState) = findOpposedState(index)
       context become executing(operator, myQbit)
       context.actorSelection(register / opposedState) ! MyAmplitude(amplitude, o, no)
+    case Execute(o@OperatorApply(operator: ControlledGate, controlled), no) =>
+      lastNo = no
+      if (myName.charAt(myName.length - operator.controlBit - 1) == '0') {
+        loginfo("ignoring controlled gate, control bit is 0")
+      } else {
+        loginfo(s"applying controlled operator $operator.(no $no)")
+        val (myQbit, opposedState) = findOpposedState(operator.targetBit)
+        context become executing(operator.operator, myQbit)
+        context.actorSelection(register / opposedState) ! MyAmplitude(amplitude, o, no)
+      }
     case Execute(ReportValue(to), no) =>
       loginfo(s"sending value to reporter.(no $no)")
       to ! StateAmplitude(myName, amplitude, -1)

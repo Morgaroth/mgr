@@ -2,6 +2,7 @@ package io.github.morgaroth.msc.quide.front.api
 
 import io.github.morgaroth.msc.quide.http.{CPU, CreateCPUReq, ExecuteOperatorReq}
 import io.github.morgaroth.msc.quide.model.QValue
+import io.github.morgaroth.msc.quide.model.operators.{Operator, SingleQbitOperator}
 import org.scalajs.dom.ext.Ajax
 import upickle.default._
 
@@ -29,13 +30,13 @@ object Api {
       read[List[CPU]](x.responseText)
     }
 
-  def executeOperator(url: String, cpuId: String, operator: String, index: Int): Future[Map[String, QValue]] =
+  def executeOperator(url: String, cpuId: String, operator: Operator, index: Int): Future[Map[String, QValue]] =
     Ajax.post(
       s"$url/cpu/$cpuId",
       writeExOperator(ExecuteOperatorReq(operator, index)),
       headers = Map("Content-Type" -> "application/json")
     ).map(x => read[Map[String, QValue]](x.responseText))
 
-  def getOperatorList(url: String): Future[List[String]] =
-    Ajax.get(s"$url/cpu/operators").map(x => read[List[String]](x.responseText))
+  def getOperatorList(url: String): Future[List[SingleQbitOperator]] =
+    Ajax.get(s"$url/cpu/operators").map(x => read[List[SingleQbitOperator]](x.responseText))
 }

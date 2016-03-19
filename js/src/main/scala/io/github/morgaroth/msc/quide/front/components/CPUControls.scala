@@ -2,6 +2,7 @@ package io.github.morgaroth.msc.quide.front.components
 
 import io.github.morgaroth.msc.quide.front.api.Api
 import io.github.morgaroth.msc.quide.model.QValue
+import io.github.morgaroth.msc.quide.model.operators.{ControlledGate, SingleQbitOperator}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -15,7 +16,7 @@ object CPUControls {
   case class Props(url: String, cpuSize: Int, cpuId: String)
 
   case class State(
-                    operators: List[String],
+                    operators: List[SingleQbitOperator],
                     register: List[(String, QValue)],
                     lastOperation: Int
                   ) {
@@ -25,7 +26,7 @@ object CPUControls {
 
   class Backend($: BackendScope[Props, State]) {
 
-    def updateRegister(lastNo: Int, newValue: List[(String,QValue)]) = {
+    def updateRegister(lastNo: Int, newValue: List[(String, QValue)]) = {
       $.modState(_.copy(register = newValue, lastOperation = lastNo))
     }
 
@@ -38,13 +39,14 @@ object CPUControls {
       })
     }
 
-    def executeOperator(o: String, i: Int): Callback = {
-      $.props.flatMap(p => Callback(
-        Api.executeOperator(p.url, p.cpuId, o, i).map { response =>
+    def executeOperator(o: SingleQbitOperator, i: Int, controlled: Option[Int]): Callback = {
+      $.props.flatMap(p => Callback {
+        val task = controlled.map(controlBit => ControlledGate(o, controlBit, i)).getOrElse(o)
+        Api.executeOperator(p.url, p.cpuId, task, i).map { response =>
           println(s"state of ${p.cpuId} is $response")
           $.modState(_.copy(register = response.toList.sortBy(_._1))).runNow()
         }
-      ))
+      })
     }
 
     def render(state: State, props: Props) = {
