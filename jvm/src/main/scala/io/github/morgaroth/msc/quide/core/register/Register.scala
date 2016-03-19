@@ -2,10 +2,10 @@ package io.github.morgaroth.msc.quide.core.register
 
 import akka.actor.{ActorRef, DeadLetter, Props}
 import io.github.morgaroth.msc.quide.core.actors.QuideActor
-import io.github.morgaroth.msc.quide.core.register.QState.{Execute, OperatorApply}
-import io.github.morgaroth.msc.quide.core.register.Register.{ExecuteOperator, ReportValue}
+import io.github.morgaroth.msc.quide.core.register.QState.{Execute, GateApply}
+import io.github.morgaroth.msc.quide.core.register.Register.{ExecuteGate, ReportValue}
 import io.github.morgaroth.msc.quide.model.QValue
-import io.github.morgaroth.msc.quide.model.operators.Operator
+import io.github.morgaroth.msc.quide.model.gates.Gate
 
 /**
   * Created by mateusz on 03.01.16.
@@ -17,7 +17,7 @@ object Register {
 
   //@formatter:off
   case class Step()
-  case class ExecuteOperator(operator: Operator, qbit: Int)
+  case class ExecuteGate(gate: Gate, qbit: Int)
   case class ReportValue(to: ActorRef)
   //@formatter:on
 }
@@ -43,8 +43,8 @@ class Register(initState: InitState) extends QuideActor {
   var no = 0l
 
   override def receive: Receive = {
-    case ExecuteOperator(operator, onQubitNo) =>
-      val task = Execute(OperatorApply(operator, onQubitNo), no)
+    case ExecuteGate(gate, targetBit) =>
+      val task = Execute(GateApply(gate, targetBit), no)
       no += 1
       context.children.foreach(_ ! task)
     case ReportValue(to) =>

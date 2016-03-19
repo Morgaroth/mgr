@@ -3,9 +3,9 @@ package io.github.morgaroth.msc.quide.core.register
 import akka.actor.{ActorRef, Props, Stash}
 import io.github.morgaroth.msc.quide.core.actors.QuideActor
 import io.github.morgaroth.msc.quide.core.monitoring.CompState.StateAmplitude
-import io.github.morgaroth.msc.quide.core.register.QState.{Execute, MyAmplitude, OperatorApply, ReportValue}
+import io.github.morgaroth.msc.quide.core.register.QState.{Execute, GateApply, MyAmplitude, ReportValue}
 import io.github.morgaroth.msc.quide.model.QValue
-import io.github.morgaroth.msc.quide.model.operators.{ControlledGate, Operator, SingleQbitOperator}
+import io.github.morgaroth.msc.quide.model.gates.{ControlledGate, Gate, SingleQbitGate}
 
 /**
   * Created by mateusz on 07.03.16.
@@ -15,15 +15,10 @@ object QState {
 
   //@formatter:off
   trait Action
-
-  case class OperatorApply(operator: Operator, firstQbit: Int) extends Action
-
+  case class GateApply(operator: Gate, firstQbit: Int) extends Action
   case class ReportValue(to: ActorRef) extends Action
-
   case class Execute(action: Action, taskNo: Long)
-
-  case class MyAmplitude(ampl: QValue, op: OperatorApply, taskNo: Long)
-
+  case class MyAmplitude(ampl: QValue, op: GateApply, taskNo: Long)
   //@formatter:on
 
 
@@ -49,10 +44,10 @@ class QState(init: QValue) extends QuideActor with Stash {
     } else false
   }
 
-  def executing(operator: SingleQbitOperator, myQbit: Char): Receive = {
+  def executing(gate: SingleQbitGate, myQbit: Char): Receive = {
     case MyAmplitude(ampl, _, _) =>
       loginfo(s"received oppose amplitude $ampl from ${sender()}")
-      amplitude = operator.execute(amplitude, ampl, myQbit)
+      amplitude = gate.execute(amplitude, ampl, myQbit)
       if (!ShallIDead()) {
         context become receive
         unstashAll()
@@ -64,20 +59,20 @@ class QState(init: QValue) extends QuideActor with Stash {
   }
 
   override def receive: Receive = {
-    case Execute(o@OperatorApply(operator: SingleQbitOperator, index), no) =>
+    case Execute(o@GateApply(operator: SingleQbitGate, targetBit), no) =>
       loginfo(s"applying 1-qbit operator $operator.(no $no)")
       lastNo = no
-      val (myQbit, opposedState) = findOpposedState(index)
+      val (myQbit, opposedState) = findOpposedState(targetBit)
       context become executing(operator, myQbit)
       context.actorSelection(register / opposedState) ! MyAmplitude(amplitude, o, no)
-    case Execute(o@OperatorApply(operator: ControlledGate, controlled), no) =>
+    case Execute(o@GateApply(gate: ControlledGate, targetBit), no) =>
       lastNo = no
-      if (myName.charAt(myName.length - operator.controlBit - 1) == '0') {
+      if (myName.charAt(myName.length - gate.controlBit - 1) == '0') {
         loginfo("ignoring controlled gate, control bit is 0")
       } else {
-        loginfo(s"applying controlled operator $operator.(no $no)")
-        val (myQbit, opposedState) = findOpposedState(operator.targetBit)
-        context become executing(operator.operator, myQbit)
+        loginfo(s"applying controlled operator $gate.(no $no)")
+        val (myQbit, opposedState) = findOpposedState(targetBit)
+        context become executing(gate.gate, myQbit)
         context.actorSelection(register / opposedState) ! MyAmplitude(amplitude, o, no)
       }
     case Execute(ReportValue(to), no) =>

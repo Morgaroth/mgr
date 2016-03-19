@@ -1,4 +1,4 @@
-package io.github.morgaroth.msc.quide.model.operators
+package io.github.morgaroth.msc.quide.model.gates
 
 import io.github.morgaroth.msc.quide.model.Complex._
 import io.github.morgaroth.msc.quide.model.QValue
@@ -7,7 +7,7 @@ import io.github.morgaroth.msc.quide.model.QValue
   * Created by mateusz on 11.01.16.
   */
 
-trait SingleQbitOperator extends Operator {
+trait SingleQbitGate extends Gate {
   def execute(myValue: QValue, othValue: QValue, myQbit: Char): QValue = {
     myQbit match {
       case '0' => executeFor0(myValue, othValue)
@@ -27,7 +27,7 @@ trait SingleQbitOperator extends Operator {
 /*
   Predefined, well-known operators
  */
-trait IdentityLike extends SingleQbitOperator {
+trait IdentityLike extends SingleQbitGate {
   override def toString: String = "Identity"
 
   override def execute(myValue: QValue, othValue: QValue, myQbit: Char): QValue = myValue
@@ -44,7 +44,7 @@ object I extends IdentityLike
   1/p2 |        |
        | 1   -1 |
 */
-trait HadammardLike extends SingleQbitOperator {
+trait HadammardLike extends SingleQbitGate {
   override def toString: String = "Hadammard"
 
   //     | ampl0 |
@@ -68,7 +68,7 @@ object H extends HadammardLike
   X = |       |
       | 1   0 |
 */
-trait PauliXLike extends SingleQbitOperator {
+trait PauliXLike extends SingleQbitGate {
   override def toString: String = "PauliX"
 
   //     | ampl0 |
@@ -91,7 +91,7 @@ object X extends PauliXLike
   Y = |       |
       | i   0 |
 */
-trait PauliYLike extends SingleQbitOperator {
+trait PauliYLike extends SingleQbitGate {
   override def toString: String = "PauliY"
 
   //     | ampl0 |
@@ -114,7 +114,7 @@ object Y extends PauliYLike
   Z = |       |
       | 0  -1 |
 */
-trait PauliZLike extends SingleQbitOperator {
+trait PauliZLike extends SingleQbitGate {
   override def toString: String = "PauliZ"
 
   //     | ampl0 |

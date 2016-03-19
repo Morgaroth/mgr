@@ -1,7 +1,7 @@
 package io.github.morgaroth.msc.quide.front
 
 import io.github.morgaroth.msc.quide.http.{CPU, CreateCPUReq, ExecuteOperatorReq}
-import io.github.morgaroth.msc.quide.model.operators.{X, Y, Z, _}
+import io.github.morgaroth.msc.quide.model.gates.{X, Y, Z, _}
 import upickle.Js
 import upickle.Js.Value
 
@@ -16,7 +16,7 @@ package object api {
 
   val parseCreatedCPU = read[CPU] _
   val writeCreateCPU = write[CreateCPUReq](_: CreateCPUReq, 0)
-  implicit val singlereaderfromjson: Reader[SingleQbitOperator] = Reader[SingleQbitOperator]{
+  implicit val singlereaderfromjson: Reader[SingleQbitGate] = Reader[SingleQbitGate]{
     case Js.Str(x) => x.toLowerCase() match {
       case "h" | "hadammard" => H
       case "i" | "identity" => I
@@ -26,20 +26,20 @@ package object api {
     }
   }
 
-  implicit val singlewritertojson: Writer[SingleQbitOperator] = Writer[SingleQbitOperator]{
+  implicit val singlewritertojson: Writer[SingleQbitGate] = Writer[SingleQbitGate]{
     o => Js.Str(o.toString)
   }
 
-  val singleReader: (Value) => SingleQbitOperator = readJs[SingleQbitOperator] _
-  val singleWriter = writeJs[SingleQbitOperator] _
+  val singleReader: (Value) => SingleQbitGate = readJs[SingleQbitGate] _
+  val singleWriter = writeJs[SingleQbitGate] _
   val controlledReader = readJs[ControlledGate] _
   val controlledWriter = writeJs[ControlledGate] _
-  implicit val thing2Writer: Writer[Operator] = upickle.default.Writer[Operator] {
-    case t: SingleQbitOperator => singleWriter(t)
+  implicit val thing2Writer: Writer[Gate] = upickle.default.Writer[Gate] {
+    case t: SingleQbitGate => singleWriter(t)
     case t: ControlledGate => controlledWriter(t)
   }
-  implicit val thing2Reader: Reader[Operator] = upickle.default.Reader[Operator] {
-    case str: Js.Value => Try[Operator](singleReader(str)).recoverWith { case _ => Try(controlledReader(str))}
+  implicit val thing2Reader: Reader[Gate] = upickle.default.Reader[Gate] {
+    case str: Js.Value => Try[Gate](singleReader(str)).recoverWith { case _ => Try(controlledReader(str))}
       .getOrElse(throw new RuntimeException(s"cannot read $str"))
   }
 

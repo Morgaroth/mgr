@@ -1,6 +1,6 @@
 package io.github.morgaroth.msc.quide.front.components
 
-import io.github.morgaroth.msc.quide.model.operators.SingleQbitOperator
+import io.github.morgaroth.msc.quide.model.gates.SingleQbitGate
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -32,7 +32,7 @@ object CompActions {
   object OperatorSelector {
     def apply(state: Props) = component(state)
 
-    case class Props(available: List[SingleQbitOperator], cur: Option[SingleQbitOperator], controlled: Boolean, change: SingleQbitOperator ~=> Callback)
+    case class Props(available: List[SingleQbitGate], cur: Option[SingleQbitGate], controlled: Boolean, change: SingleQbitGate ~=> Callback)
 
     val component = ReactComponentB[Props]("operatorInput")
       .render_P { s =>
@@ -54,17 +54,17 @@ object CompActions {
   object ControlledSelector {
     def apply(state: Props) = component(state)
 
-    case class Props(size: Int, controlledOn: Option[Int] = None, currentFrom: Option[Int], controlTo: Option[Int] ~=> Callback)
+    case class Props(size: Int, controlledOn: Option[Int] = None, targetBit: Option[Int], controlBit: Option[Int] ~=> Callback)
 
     val component = ReactComponentB[Props]("controlInput")
       .render_P { s =>
         <.div(^.id := "menu",
           <.b(s"Controlled? (current: ${s.controlledOn.map(x => s"by $x").getOrElse("no")}):"),
           <.br,
-          <.button("Simple", ^.onClick --> s.controlTo(None)),
+          <.button("Simple", ^.onClick --> s.controlBit(None)),
           <.ul(
-            (0 until s.size).filterNot(s.currentFrom.contains) map { x =>
-              <.button(x.toString, ^.onClick --> s.controlTo(Some(x)))
+            (0 until s.size).filterNot(s.targetBit.contains) map { x =>
+              <.button(x.toString, ^.onClick --> s.controlBit(Some(x)))
             }
           )
         )
@@ -72,45 +72,45 @@ object CompActions {
       .build
   }
 
-  case class State(operator: Option[SingleQbitOperator] = None, controlledTo: Option[Int] = None, qbit: Option[Int] = None)
+  case class State(gate: Option[SingleQbitGate] = None, controlledTo: Option[Int] = None, qbit: Option[Int] = None)
 
-  case class Props(available: List[SingleQbitOperator], registerSize: Int, execute: (SingleQbitOperator, Int, Option[Int]) => Callback)
+  case class Props(available: List[SingleQbitGate], registerSize: Int, execute: (SingleQbitGate, Int, Option[Int]) => Callback)
 
   class Backend($: BackendScope[Props, State]) {
 
-    def setOperator(o: SingleQbitOperator): Callback = {
-      println(s"updteing operator  to $o")
-      $.modState(_.copy(operator = Some(o)))
+    def setGate(o: SingleQbitGate): Callback = {
+      println(s"updating gate to $o")
+      $.modState(_.copy(gate = Some(o)))
     }
 
     def controlled(newValue: Option[Int]): Callback = {
-      println(s"updating negated to $newValue")
+      println(s"updating controlBit to $newValue")
       $.modState(_.copy(controlledTo = newValue))
     }
 
     def setFirstQbit(q: Int): Callback = {
-      println(s"updating index to $q")
+      println(s"updating tagetBit to $q")
       $.modState(_.copy(qbit = Some(q)))
     }
 
     def onDone(props: Props) = {
       $.state.flatMap { s =>
-        println(s"triggering execute of operator with state $s")
-        props.execute(s.operator.get, s.qbit.get, s.controlledTo)
+        println(s"triggering execute of gate with state $s")
+        props.execute(s.gate.get, s.qbit.get, s.controlledTo)
       }
     }
 
     def render(s: State, props: Props) = {
       println(s"rerendering actioner with state $s and props $props")
-      if (s.operator.isDefined && s.qbit.isDefined) {
+      if (s.gate.isDefined && s.qbit.isDefined) {
         <.div(
-          OperatorSelector(OperatorSelector.Props(props.available, s.operator, s.controlledTo.nonEmpty, ReusableFn(setOperator))),
+          OperatorSelector(OperatorSelector.Props(props.available, s.gate, s.controlledTo.nonEmpty, ReusableFn(setGate))),
           <.br,
           IndexSelector(IndexSelector.Props(props.registerSize, s.qbit, ReusableFn(setFirstQbit))),
           <.br,
           ControlledSelector(ControlledSelector.Props(props.registerSize, s.controlledTo, s.qbit, ReusableFn(controlled))),
           <.br,
-          <.button(s"Execute", ^.onClick --> onDone(props)), <.a(s" operator ${s.controlledTo.map(_ => "C").getOrElse("")}${s.operator.get} on qbit ${s.qbit.get.toString}${s.controlledTo.map(x => s" controlled by   $x").getOrElse("")}")
+          <.button(s"Execute", ^.onClick --> onDone(props)), <.a(s" operator ${s.controlledTo.map(_ => "C").getOrElse("")}${s.gate.get} on qbit ${s.qbit.get.toString}${s.controlledTo.map(x => s" controlled by   $x").getOrElse("")}")
         )
       } else {
         <.p(s"state $s is empty")
@@ -126,16 +126,16 @@ object CompActions {
     .renderBackend[Backend]
     .componentWillReceiveProps(a =>
       a.$.modState(_.copy(
-        operator = a.$.state.operator orElse a.nextProps.available.headOption,
+        gate = a.$.state.gate orElse a.nextProps.available.headOption,
         qbit = a.$.state.qbit orElse (if (a.nextProps.registerSize > 0) Some(0) else None)
       ))
     )
     .build
 
   def apply(
-             available: List[SingleQbitOperator],
+             available: List[SingleQbitGate],
              registerSize: Int,
-             execute: (SingleQbitOperator, Int, Option[Int]) => Callback) =
+             execute: (SingleQbitGate, Int, Option[Int]) => Callback) =
     component(Props(available, registerSize, execute))
 
 }

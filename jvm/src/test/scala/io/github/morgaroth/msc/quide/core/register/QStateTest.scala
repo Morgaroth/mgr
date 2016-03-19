@@ -3,9 +3,9 @@ package io.github.morgaroth.msc.quide.core.register
 import akka.actor.{ActorSystem, DeadLetter}
 import akka.testkit._
 import io.github.morgaroth.msc.quide.core.monitoring.CompState.StateAmplitude
-import io.github.morgaroth.msc.quide.core.register.QState.{Execute, MyAmplitude, OperatorApply, ReportValue}
+import io.github.morgaroth.msc.quide.core.register.QState.{Execute, GateApply, MyAmplitude, ReportValue}
 import io.github.morgaroth.msc.quide.model._
-import io.github.morgaroth.msc.quide.model.operators.H
+import io.github.morgaroth.msc.quide.model.gates.H
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
@@ -50,7 +50,7 @@ class QStateTest() extends TestKit(ActorSystem("MySpec")) with ImplicitSender
   def checkIfExecuteHadammardCorrectly(state: String, qbitNo: Int, expectedAmplitude: QValue): Unit = {
     val test = system.actorOf(QState.props(QValue.`1`), state)
     val reporter = TestProbe()
-    test ! Execute(OperatorApply(H, qbitNo), 0)
+    test ! Execute(GateApply(H, qbitNo), 0)
     test ! MyAmplitude(0)
     test ! Execute(ReportValue(reporter.ref), 1)
     val a: QValue = reporter.expectMsgClass(classOf[StateAmplitude]).value
@@ -62,7 +62,7 @@ class QStateTest() extends TestKit(ActorSystem("MySpec")) with ImplicitSender
     val testDeadLetter = TestProbe()
     system.eventStream.subscribe(testDeadLetter.ref, classOf[DeadLetter])
     val test = system.actorOf(QState.props(), initState)
-    test ! Execute(OperatorApply(H, qbitNo), 0)
+    test ! Execute(GateApply(H, qbitNo), 0)
     val DeadLetter(msg, from, to) = testDeadLetter.expectMsgClass(classOf[DeadLetter])
     msg should equal(MyAmplitude(Complex.`0`))
     from should equal(test)

@@ -1,11 +1,11 @@
-package io.github.morgaroth.msc.quide.model.operators
+package io.github.morgaroth.msc.quide.model.gates
 
 import scala.language.implicitConversions
 
 /**
   * Created by mateusz on 04.01.16.
   */
-trait Operator {
+trait Gate {
   def size: Int
 
   //  def elements: Map[MatrixPos, Complex]

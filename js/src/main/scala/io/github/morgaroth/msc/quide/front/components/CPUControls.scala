@@ -2,7 +2,7 @@ package io.github.morgaroth.msc.quide.front.components
 
 import io.github.morgaroth.msc.quide.front.api.Api
 import io.github.morgaroth.msc.quide.model.QValue
-import io.github.morgaroth.msc.quide.model.operators.{ControlledGate, SingleQbitOperator}
+import io.github.morgaroth.msc.quide.model.gates.{ControlledGate, SingleQbitGate}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -16,7 +16,7 @@ object CPUControls {
   case class Props(url: String, cpuSize: Int, cpuId: String)
 
   case class State(
-                    operators: List[SingleQbitOperator],
+                    operators: List[SingleQbitGate],
                     register: List[(String, QValue)],
                     lastOperation: Int
                   ) {
@@ -39,9 +39,9 @@ object CPUControls {
       })
     }
 
-    def executeOperator(o: SingleQbitOperator, i: Int, controlled: Option[Int]): Callback = {
+    def executeOperator(o: SingleQbitGate, i: Int, controlled: Option[Int]): Callback = {
       $.props.flatMap(p => Callback {
-        val task = controlled.map(controlBit => ControlledGate(o, controlBit, i)).getOrElse(o)
+        val task = controlled.map(controlBit => ControlledGate(o, controlBit)).getOrElse(o)
         Api.executeOperator(p.url, p.cpuId, task, i).map { response =>
           println(s"state of ${p.cpuId} is $response")
           $.modState(_.copy(register = response.toList.sortBy(_._1))).runNow()

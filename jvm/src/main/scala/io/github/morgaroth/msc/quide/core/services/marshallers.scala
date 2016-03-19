@@ -2,7 +2,7 @@ package io.github.morgaroth.msc.quide.core.services
 
 import io.github.morgaroth.msc.quide.http.{CPU, CreateCPUReq, ExecuteOperatorReq}
 import io.github.morgaroth.msc.quide.model.Complex
-import io.github.morgaroth.msc.quide.model.operators.{Z, _}
+import io.github.morgaroth.msc.quide.model.gates.{Z, _}
 import spray.json._
 
 import scala.util.Try
@@ -16,11 +16,11 @@ trait marshallers extends DefaultJsonProtocol {
   implicit lazy val fsgercdszfs: RootJsonFormat[CreateCPUReq] = jsonFormat1(CreateCPUReq.apply)
   implicit lazy val fgdsgvfsdgfds: RootJsonFormat[CPU] = jsonFormat2(CPU.apply)
 
-  implicit object SingleOperatorJsonFormat extends JsonFormat[SingleQbitOperator] {
-    def write(c: SingleQbitOperator): JsString =
+  implicit object SingleOperatorJsonFormat extends JsonFormat[SingleQbitGate] {
+    def write(c: SingleQbitGate): JsString =
       JsString(c.toString)
 
-    def read(value: JsValue): SingleQbitOperator = value match {
+    def read(value: JsValue): SingleQbitGate = value match {
       case JsString(name) => name.toLowerCase() match {
         case "h" | "hadammard" => H
         case "i" | "identity" => I
@@ -35,17 +35,17 @@ trait marshallers extends DefaultJsonProtocol {
   implicit lazy val controlledOperatorJsonFormat: RootJsonFormat[ControlledGate] = jsonFormat3(ControlledGate)
 
 
-  implicit object OperatorJsonFormat extends JsonFormat[Operator] {
+  implicit object OperatorJsonFormat extends JsonFormat[Gate] {
 
     import spray.json._
 
-    def write(value: Operator): JsValue = value match {
-      case c: SingleQbitOperator => c.toJson
+    def write(value: Gate): JsValue = value match {
+      case c: SingleQbitGate => c.toJson
       case c: ControlledGate => c.toJson
     }
 
-    def read(value: JsValue): Operator =
-      Try(value.convertTo[SingleQbitOperator]).recoverWith {
+    def read(value: JsValue): Gate =
+      Try(value.convertTo[SingleQbitGate]).recoverWith {
         case e => Try(value.convertTo[ControlledGate])
       }.getOrElse(deserializationError(s"Cannot convert $value to operator"))
   }

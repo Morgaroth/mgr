@@ -9,7 +9,7 @@ import akka.util.Timeout
 import io.github.morgaroth.msc.quide.core.monitoring.CompState
 import io.github.morgaroth.msc.quide.core.monitoring.CompState.GetValue
 import io.github.morgaroth.msc.quide.core.register.Register
-import io.github.morgaroth.msc.quide.core.register.Register.{ExecuteOperator, ReportValue}
+import io.github.morgaroth.msc.quide.core.register.Register.{ExecuteGate, ReportValue}
 import io.github.morgaroth.msc.quide.http.{CPU, CreateCPUReq, ExecuteOperatorReq}
 import io.github.morgaroth.msc.quide.model.QValue
 import spray.http.StatusCodes
@@ -56,7 +56,7 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
   def handleOperation(id: UUID)(req: ExecuteOperatorReq): ToResponseMarshallable = {
     log.info(s"received execute req $req on cpu $id")
     cpus.get(id) map[ToResponseMarshallable] { case (register, s) =>
-      register ! ExecuteOperator(req.operator, req.index)
+      register ! ExecuteGate(req.operator, req.index)
       akka.pattern.after(1.second, as.scheduler){
         val listener = as.actorOf(CompState.props(s.size))
         val result = (listener ? GetValue).mapTo[Map[String, QValue]]
