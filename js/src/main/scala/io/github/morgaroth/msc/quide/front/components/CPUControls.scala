@@ -23,7 +23,6 @@ object CPUControls {
     def size = register.size
   }
 
-
   class Backend($: BackendScope[Props, State]) {
 
     def updateRegister(lastNo: Int, newValue: List[(String, QValue)]) = {

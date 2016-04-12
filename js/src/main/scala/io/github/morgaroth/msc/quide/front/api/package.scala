@@ -5,7 +5,7 @@ import io.github.morgaroth.msc.quide.model.gates.{X, Y, Z, _}
 import upickle.Js
 import upickle.Js.Value
 
-import scala.util.Try
+import scala.util.{Failure, Try}
 
 /**
   * Created by mateusz on 07.01.16.
@@ -16,7 +16,7 @@ package object api {
 
   val parseCreatedCPU = read[CPU] _
   val writeCreateCPU = write[CreateCPUReq](_: CreateCPUReq, 0)
-  implicit val singlereaderfromjson: Reader[SingleQbitGate] = Reader[SingleQbitGate]{
+  implicit val singlereaderfromjson: Reader[SingleQbitGate] = Reader[SingleQbitGate] {
     case Js.Str(x) => x.toLowerCase() match {
       case "h" | "hadammard" => H
       case "i" | "identity" => I
@@ -26,7 +26,7 @@ package object api {
     }
   }
 
-  implicit val singlewritertojson: Writer[SingleQbitGate] = Writer[SingleQbitGate]{
+  implicit val singlewritertojson: Writer[SingleQbitGate] = Writer[SingleQbitGate] {
     o => Js.Str(o.toString)
   }
 
@@ -34,13 +34,22 @@ package object api {
   val singleWriter = writeJs[SingleQbitGate] _
   val controlledReader = readJs[ControlledGate] _
   val controlledWriter = writeJs[ControlledGate] _
+  val multiControlledReader = readJs[MultiControlledGate] _
+  val multiControlledWriter = writeJs[MultiControlledGate] _
   implicit val thing2Writer: Writer[Gate] = upickle.default.Writer[Gate] {
     case t: SingleQbitGate => singleWriter(t)
     case t: ControlledGate => controlledWriter(t)
+    case t: MultiControlledGate => multiControlledWriter(t)
   }
+
+
+  val possibleGateDeserializers = List(singleReader, controlledReader, multiControlledReader)
+
   implicit val thing2Reader: Reader[Gate] = upickle.default.Reader[Gate] {
-    case str: Js.Value => Try[Gate](singleReader(str)).recoverWith { case _ => Try(controlledReader(str))}
-      .getOrElse(throw new RuntimeException(s"cannot read $str"))
+    case str: Js.Value =>
+      possibleGateDeserializers.foldLeft[Try[Gate]](Failure(new Exception("try not tried"))) {
+        case (acc, reader) => acc.recoverWith { case _ => Try(reader(str)) }
+      }.getOrElse(throw new RuntimeException(s"cannot read $str"))
   }
 
   val writeExOperator = write[ExecuteOperatorReq](_: ExecuteOperatorReq, 0)

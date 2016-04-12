@@ -5,7 +5,7 @@ import io.github.morgaroth.msc.quide.core.actors.QuideActor
 import io.github.morgaroth.msc.quide.core.monitoring.CompState.StateAmplitude
 import io.github.morgaroth.msc.quide.core.register.QState.{Execute, GateApply, MyAmplitude, ReportValue}
 import io.github.morgaroth.msc.quide.model.QValue
-import io.github.morgaroth.msc.quide.model.gates.{ControlledGate, Gate, SingleQbitGate}
+import io.github.morgaroth.msc.quide.model.gates.{ControlledGate, Gate, MultiControlledGate, SingleQbitGate}
 
 /**
   * Created by mateusz on 07.03.16.
@@ -74,6 +74,16 @@ class QState(init: QValue) extends QuideActor with Stash {
         val (myQbit, opposedState) = findOpposedState(targetBit)
         context become executing(gate.gate, myQbit)
         context.actorSelection(register / opposedState) ! MyAmplitude(amplitude, o, no)
+      }
+    case Execute(o@GateApply(gate: MultiControlledGate, targetBit), no) =>
+      lastNo = no
+      if (gate.controlBits.map(idx => myName.charAt(myName.length - idx - 1)).forall(_ == '1')) {
+        loginfo(s"applying multi controlled operator $gate.(no $no)")
+        val (myQbit, opposedState) = findOpposedState(targetBit)
+        context become executing(gate.gate, myQbit)
+        context.actorSelection(register / opposedState) ! MyAmplitude(amplitude, o, no)
+      } else {
+        loginfo("ignoring multi controlled gate, one of control bits is 0")
       }
     case Execute(ReportValue(to), no) =>
       loginfo(s"sending value to reporter.(no $no)")
