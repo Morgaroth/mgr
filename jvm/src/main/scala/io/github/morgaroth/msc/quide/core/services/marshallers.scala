@@ -2,7 +2,7 @@ package io.github.morgaroth.msc.quide.core.services
 
 import io.github.morgaroth.msc.quide.http.{CPU, CreateCPUReq, ExecuteOperatorReq}
 import io.github.morgaroth.msc.quide.model.Complex
-import io.github.morgaroth.msc.quide.model.gates.{Z, _}
+import io.github.morgaroth.msc.quide.model.gates._
 import spray.json._
 
 import scala.util.{Failure, Try}
@@ -12,7 +12,6 @@ import scala.util.{Failure, Try}
   */
 trait marshallers extends DefaultJsonProtocol {
   implicit lazy val complex: RootJsonFormat[Complex] = jsonFormat(Complex.apply, "re", "im")
-  implicit lazy val exectureoperatorreq: RootJsonFormat[ExecuteOperatorReq] = jsonFormat2(ExecuteOperatorReq.apply)
   implicit lazy val fsgercdszfs: RootJsonFormat[CreateCPUReq] = jsonFormat1(CreateCPUReq.apply)
   implicit lazy val cpuJsonFormat: RootJsonFormat[CPU] = jsonFormat2(CPU.apply)
 
@@ -32,8 +31,7 @@ trait marshallers extends DefaultJsonProtocol {
     }
   }
 
-  implicit lazy val controlledGateJsonFormat: RootJsonFormat[ControlledGate] = jsonFormat2(ControlledGate)
-  implicit lazy val multiControlledGateJsonFormat: RootJsonFormat[MultiControlledGate] = jsonFormat2(MultiControlledGate)
+  implicit lazy val multiControlledGateJsonFormat: RootJsonFormat[MultiControlledGate] = jsonFormat(MultiControlledGate.apply, "gate", "controlBits")
 
 
   implicit object OperatorJsonFormat extends JsonFormat[Gate] {
@@ -42,23 +40,28 @@ trait marshallers extends DefaultJsonProtocol {
 
     def write(value: Gate): JsValue = value match {
       case c: SingleQbitGate => c.toJson
-      case c: ControlledGate => c.toJson
       case c: MultiControlledGate => c.toJson
     }
 
 
     val possibleGateDeserializers: List[(JsValue) => Gate] = List(
       _.convertTo[SingleQbitGate],
-      _.convertTo[ControlledGate],
       _.convertTo[MultiControlledGate]
     )
 
-    def read(value: JsValue): Gate =
-      possibleGateDeserializers.foldLeft[Try[Gate]](Failure(new Exception("try not tried"))) {
+    def read(value: JsValue): Gate = {
+      val triedGate: Try[Gate] = possibleGateDeserializers.foldLeft[Try[Gate]](Failure(new Exception("try not tried"))) {
         case (curr, acc) => curr.recoverWith {
-          case _ => Try(acc(value))
+          case e => Try(acc(value)).recoverWith { case n => Failure(new Exception(e.getMessage + " ==> " + n.getMessage)) }
         }
-      }.getOrElse(deserializationError(s"Cannot convert $value to gate"))
+      }
+      triedGate.failed.foreach {
+        case x => println(x.getMessage)
+      }
+      triedGate.getOrElse(deserializationError(s"Cannot convert $value to gate"))
+    }
   }
+
+  implicit lazy val exectureoperatorreq: RootJsonFormat[ExecuteOperatorReq] = jsonFormat2(ExecuteOperatorReq.apply)
 
 }

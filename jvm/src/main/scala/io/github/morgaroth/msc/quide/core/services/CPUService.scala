@@ -25,8 +25,6 @@ import scala.concurrent.duration._
   */
 class CPUService(as: ActorSystem) extends Directives with marshallers with SprayJsonSupport {
 
-  import as.dispatcher
-
   implicit val tm: Timeout = 10.seconds
   val log = Logging(as, getClass)
 
@@ -51,16 +49,19 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
     }
   //@formatter:on
 
-  def handleOperation(id: UUID, userId: String)(req: ExecuteOperatorReq): ToResponseMarshallable = {
-    log.info(s"received execute req $req on cpu $id")
+  def handleOperation(id: UUID, userId: String)(request: List[ExecuteOperatorReq]): ToResponseMarshallable = {
+    log.info(s"received execute req $request on cpu $id")
     cpusPU.get(userId).flatMap(_.get(id)) map[ToResponseMarshallable] { case (register, s) =>
-      register ! ExecuteGate(req.operator, req.index)
-      akka.pattern.after(200.millis, as.scheduler) {
-        val listener = as.actorOf(CompState.props(s.size))
-        val result = (listener ? GetValue).mapTo[Map[String, QValue]]
-        register ! ReportValue(listener)
-        result
+      request.foreach { req =>
+        register ! ExecuteGate(req.gate, req.index)
+        //  akka.pattern.after(200.millis, as.scheduler) {
+        //    val listener = as.actorOf(CompState.props(s.size))
+        //    val result = (listener ? GetValue).mapTo[Map[String, QValue]]
+        //    register ! ReportValue(listener)
+        //    result
+        //  }
       }
+      StatusCodes.OK
     } getOrElse StatusCodes.BadRequest
   }
 

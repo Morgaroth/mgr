@@ -15,23 +15,16 @@ trait CORSSupport {
   )
 
   def cors[T]: Directive0 = mapRequestContext { ctx =>
-    println("dupa")
     ctx.withRouteResponseHandling {
-      case x if {
-        println(s"route response handling with $x")
-        false
-      } => throw new RuntimeException()
       case Rejected(x) if ctx.request.method.equals(HttpMethods.OPTIONS) =>
         val allowedMethods: List[HttpMethod] = x.collect { case rejection: MethodRejection => rejection.supported }
         ctx.complete {
-          println(s"allowed methods $allowedMethods oring $allowOriginHeader")
           HttpResponse().withHeaders(
             `Access-Control-Allow-Methods`(HttpMethods.OPTIONS, allowedMethods: _*) :: allowOriginHeader ::
               optionsCorsHeaders
           )
         }
     }.withHttpResponseHeadersMapped { headers =>
-      println(s"completed with ${allowOriginHeader :: headers}")
       allowOriginHeader :: headers
     }
   }
