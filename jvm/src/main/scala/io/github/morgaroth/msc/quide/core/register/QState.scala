@@ -3,7 +3,7 @@ package io.github.morgaroth.msc.quide.core.register
 import akka.actor.{ActorRef, Props, Stash}
 import io.github.morgaroth.msc.quide.core.actors.QuideActor
 import io.github.morgaroth.msc.quide.core.monitoring.CompState.StateAmplitude
-import io.github.morgaroth.msc.quide.core.register.QState.{Execute, GateApply, MyAmplitude, ReportValue}
+import io.github.morgaroth.msc.quide.core.register.QState._
 import io.github.morgaroth.msc.quide.model.QValue
 import io.github.morgaroth.msc.quide.model.gates.{Gate, MultiControlledGate, SingleQbitGate}
 
@@ -18,7 +18,7 @@ object QState {
   case class GateApply(operator: Gate, firstQbit: Int) extends Action
   case class ReportValue(to: ActorRef) extends Action
   case class Execute(action: Action, taskNo: Long)
-  case object NoOp extends Action
+  case object Ready extends Action
   case class MyAmplitude(ampl: QValue, op: GateApply, taskNo: Long)
   //@formatter:on
 
@@ -33,8 +33,6 @@ class QState(init: QValue, startNo: Long) extends QuideActor with Stash {
 
   var amplitude: QValue = init
   var currentNo = startNo
-
-  val history = context.actorSelection("../history")
 
   def loginfo(msg: String) = {
     log.info(s"|$myName> - $msg")
@@ -52,41 +50,53 @@ class QState(init: QValue, startNo: Long) extends QuideActor with Stash {
       loginfo(s"received oppose amplitude $ampl from ${sender().path} task $no")
       amplitude = gate.execute(amplitude, ampl, myQbit)
       if (!ShallIDead()) {
-        currentNo += 1
+        goAhead()
         unstashAll()
         context become receive
       } else {
         loginfo("I'm dying...")
       }
-    case _ =>
+    case e =>
       stash()
+      log.error(s"received $e during executiong stage, currento no == $currentNo")
   }
 
   override def receive: Receive = {
     case Execute(o@GateApply(operator: SingleQbitGate, targetBit), no) if currentNo == no =>
       loginfo(s"applying 1-qbit operator $operator.(no $no)")
       val (myQbit, opposedState) = findOpposedState(targetBit)
+      unstashAll()
       context become executing(operator, myQbit)
       context.actorSelection(register / opposedState) ! MyAmplitude(amplitude, o, no)
     case Execute(o@GateApply(gate: MultiControlledGate, targetBit), no) if currentNo == no =>
       if (gate.controlBits.map(idx => myName.charAt(myName.length - idx - 1)).forall(_ == '1')) {
         loginfo(s"applying multi controlled operator $gate.(no $no)")
         val (myQbit, opposedState) = findOpposedState(targetBit)
+        unstashAll()
         context become executing(gate.gate, myQbit)
         context.actorSelection(register / opposedState) ! MyAmplitude(amplitude, o, no)
       } else {
         loginfo("ignoring multi controlled gate, one of control bits is 0")
-        currentNo += 1
+        goAhead()
       }
     case Execute(ReportValue(to), no) if currentNo == no =>
       loginfo(s"sending value to reporter.(no $no)")
       to ! StateAmplitude(myName, amplitude, no)
-      currentNo += 1
+      goAhead()
     case Execute(_, no) if no > currentNo =>
-      loginfo(s"stashing $no")
-      history ! currentNo
+      loginfo(s"ignoring $no")
+      context.parent ! currentNo
+    case Execute(_, no) if no < currentNo =>
+      loginfo(s"ignoring DUE TO OLD $no")
+    case m: MyAmplitude =>
       stash()
+    case Ready =>
+      context.parent ! currentNo
+  }
 
+  def goAhead(): Unit = {
+    currentNo += 1
+    context.parent ! currentNo
   }
 
   def findOpposedState(index: Int): (Char, String) = {

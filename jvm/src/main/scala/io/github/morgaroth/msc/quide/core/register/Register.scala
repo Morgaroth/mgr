@@ -2,7 +2,7 @@ package io.github.morgaroth.msc.quide.core.register
 
 import akka.actor.{ActorRef, DeadLetter, Props}
 import io.github.morgaroth.msc.quide.core.actors.QuideActor
-import io.github.morgaroth.msc.quide.core.register.QState.{Execute, GateApply}
+import io.github.morgaroth.msc.quide.core.register.QState.{Execute, GateApply, Ready}
 import io.github.morgaroth.msc.quide.core.register.Register.{ExecuteGate, ReportValue}
 import io.github.morgaroth.msc.quide.model.QValue
 import io.github.morgaroth.msc.quide.model.gates.Gate
@@ -34,7 +34,7 @@ class Register(initState: InitState) extends QuideActor {
   }
 
   // create initial state actor
-  context.actorOf(QState2.props(0, initState.value), initState.name)
+  context.actorOf(QState.props(0, initState.value), initState.name)
 
   // create zeroState mechanism
   val zeroState = context.actorOf(ZeroState.props(self.path, context.actorOf), "zero")
@@ -49,12 +49,12 @@ class Register(initState: InitState) extends QuideActor {
     case ExecuteGate(gate, targetBit) =>
       val task = Execute(GateApply(gate, targetBit), no)
       tasks += no -> task
-      context.children.foreach(_ ! task)
+      context.children.foreach(_ ! Ready)
       no += 1
     case ReportValue(to) =>
       val task = Execute(QState.ReportValue(to), no)
       tasks += no -> task
-      context.children.foreach(_ ! task)
+      context.children.foreach(_ ! Ready)
       no += 1
     case taskNo: Long =>
       tasks.get(taskNo).foreach(sender() ! _)
