@@ -3,6 +3,7 @@ package io.github.morgaroth.msc.quide.core.services
 import java.util.UUID
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
+import akka.dispatch.Dispatchers
 import akka.event.Logging
 import akka.pattern.ask
 import akka.util.Timeout
@@ -18,6 +19,7 @@ import spray.httpx.marshalling.ToResponseMarshallable
 import spray.routing.Directives
 
 import scala.collection.mutable
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 /**
@@ -27,6 +29,7 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
 
   implicit val tm: Timeout = 10.seconds
   val log = Logging(as, getClass)
+  implicit val ex: ExecutionContext = as.dispatcher
 
   override val pathEnd = pathEndOrSingleSlash
 
