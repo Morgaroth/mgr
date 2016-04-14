@@ -34,21 +34,29 @@ class Register(initState: InitState) extends QuideActor {
   }
 
   // create initial state actor
-  context.actorOf(QState.props(initState.value), initState.name)
+  context.actorOf(QState2.props(0, initState.value), initState.name)
 
   // create zeroState mechanism
-  val zeroState = context.actorOf(ZeroState.props(self.path, context.actorOf))
+  val zeroState = context.actorOf(ZeroState.props(self.path, context.actorOf), "zero")
+  //  val history = context.actorOf(Props[History], "history")
   context.system.eventStream.subscribe(zeroState, classOf[DeadLetter])
 
   var no = 0l
 
+  val tasks = collection.mutable.Map.empty[Long, QState.Execute]
+
   override def receive: Receive = {
     case ExecuteGate(gate, targetBit) =>
       val task = Execute(GateApply(gate, targetBit), no)
-      no += 1
+      tasks += no -> task
       context.children.foreach(_ ! task)
-    case ReportValue(to) =>
-      context.children.foreach(_ ! Execute(QState.ReportValue(to), no))
       no += 1
+    case ReportValue(to) =>
+      val task = Execute(QState.ReportValue(to), no)
+      tasks += no -> task
+      context.children.foreach(_ ! task)
+      no += 1
+    case taskNo: Long =>
+      tasks.get(taskNo).foreach(sender() ! _)
   }
 }

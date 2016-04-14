@@ -74,7 +74,7 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
     resp
   }
 
-  def handleCPUDeletion(cpuId: UUID, userId: String) = {
+  def handleCPUDeletion(cpuId: UUID, userId: String): ToResponseMarshallable = {
     cpusPU.get(userId).flatMap(_.get(cpuId)).foreach(_._1 ! PoisonPill)
     cpusPU.get(userId).foreach(_.remove(cpuId))
     StatusCodes.NoContent

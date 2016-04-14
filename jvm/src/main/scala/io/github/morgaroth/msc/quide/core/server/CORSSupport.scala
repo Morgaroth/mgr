@@ -17,7 +17,7 @@ trait CORSSupport {
   def cors[T]: Directive0 = mapRequestContext { ctx =>
     ctx.withRouteResponseHandling {
       case Rejected(x) if ctx.request.method.equals(HttpMethods.OPTIONS) =>
-        val allowedMethods: List[HttpMethod] = x.collect { case rejection: MethodRejection => rejection.supported }
+        val allowedMethods: List[HttpMethod] = x.collect { case rejection: MethodRejection => rejection.supported } ::: List(HttpMethods.DELETE)
         ctx.complete {
           HttpResponse().withHeaders(
             `Access-Control-Allow-Methods`(HttpMethods.OPTIONS, allowedMethods: _*) :: allowOriginHeader ::
