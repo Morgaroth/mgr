@@ -3,14 +3,13 @@ package io.github.morgaroth.msc.quide.core.services
 import java.util.UUID
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
-import akka.dispatch.Dispatchers
 import akka.event.Logging
 import akka.pattern.ask
 import akka.util.Timeout
 import io.github.morgaroth.msc.quide.core.monitoring.CompState
 import io.github.morgaroth.msc.quide.core.monitoring.CompState.GetValue
-import io.github.morgaroth.msc.quide.core.register.RegisterNoDeaths
-import io.github.morgaroth.msc.quide.core.register.RegisterNoDeaths.{ExecuteGate, ReportValue}
+import io.github.morgaroth.msc.quide.core.register.Register.{ExecuteGate, ReportValue}
+import io.github.morgaroth.msc.quide.core.register.{Register, RegisterNoDeaths}
 import io.github.morgaroth.msc.quide.http.{CPU, CreateCPUReq, ExecuteOperatorReq}
 import io.github.morgaroth.msc.quide.model.QValue
 import spray.http.StatusCodes
@@ -69,9 +68,9 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
   }
 
   def createNewCPU(userIdMaybe: String)(req: CreateCPUReq): ToResponseMarshallable = {
-    log.info("creating cpu")
+    log.info(s"creating cpu req $req")
     val id = UUID.randomUUID()
-    val ref = as.actorOf(RegisterNoDeaths.props(req.size))
+    val ref = as.actorOf(if (req.full) RegisterNoDeaths.props(req.size) else Register.props(req.size))
     val resp = CPU(req.size, id.toString)
     cpusPU.getOrElseUpdate(userIdMaybe, mutable.Map.empty).update(id, (ref, resp))
     resp
@@ -85,7 +84,7 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
 
   def getCPUValue(cpuId: UUID, userId: String): ToResponseMarshallable = {
     cpusPU.get(userId).flatMap(_.get(cpuId)) map[ToResponseMarshallable] { case (register, s) =>
-      val listener = as.actorOf(CompState.props(Math.pow(2,s.size).toLong))
+      val listener = as.actorOf(CompState.props(Math.pow(2, s.size).toLong))
       val result = (listener ? GetValue).mapTo[Map[String, QValue]]
       register ! ReportValue(listener)
       result

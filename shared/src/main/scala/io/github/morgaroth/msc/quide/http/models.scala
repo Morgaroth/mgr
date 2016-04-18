@@ -7,6 +7,6 @@ import io.github.morgaroth.msc.quide.model.gates._
   */
 case class ExecuteOperatorReq(gate: Gate, index: Int)
 
-case class CreateCPUReq(size: Int)
+case class CreateCPUReq(size: Int, full: Boolean)
 
 case class CPU(size: Int, id: String)

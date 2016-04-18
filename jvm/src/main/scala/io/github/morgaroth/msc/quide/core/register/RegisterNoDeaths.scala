@@ -21,6 +21,8 @@ class RegisterNoDeaths(initState: InitState) extends QuideActor {
     log.warning(s"too big state, possible OoM Error (current length is ${initState.name.length}")
   }
 
+  log.info("")
+
   // experimental
   def createActors(prefix: String = "") {
     if (prefix.length < initState.name.length) {

@@ -15,7 +15,7 @@ import scala.concurrent.duration._
 
 object QStateNoDeath {
 
-  def props(startNo: Long, init: QValue = QValue.`0`) = Props(classOf[QState], init, startNo)
+  def props(startNo: Long, init: QValue = QValue.`0`) = Props(classOf[QStateNoDeath], init, startNo)
 }
 
 class QStateNoDeath(init: QValue, startNo: Long) extends QuideActor with Stash {
@@ -47,7 +47,7 @@ class QStateNoDeath(init: QValue, startNo: Long) extends QuideActor with Stash {
     //      log.error(s"|$myName> - received $e during executiong stage, currento no == $currentNo")
   }
 
-  override def receive: Receive = {
+  override def receive: Receive =   {
     case Execute(o@GateApply(operator: SingleQbitGate, targetBit), no) if currentNo == no =>
       //      loginfo(s"applying 1-qbit operator $operator.(no $no)")
       val (myQbit, opposedState) = findOpposedState(targetBit)

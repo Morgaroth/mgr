@@ -39,7 +39,9 @@ class CompState(size: Long) extends QuideActor {
 
     case StateAmplitude(idx, value, _) =>
       log.info(s"getting value from qubit $idx")
-      completed += idx -> value
+      if (value >= 0.001d) {
+        completed += idx -> value
+      }
       collected += 1
       if (collected == size) {
         requesters.foreach(_ ! completed.toMap)

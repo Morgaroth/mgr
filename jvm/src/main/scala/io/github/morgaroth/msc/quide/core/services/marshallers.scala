@@ -12,7 +12,7 @@ import scala.util.{Failure, Try}
   */
 trait marshallers extends DefaultJsonProtocol {
   implicit lazy val complex: RootJsonFormat[Complex] = jsonFormat(Complex.apply, "re", "im")
-  implicit lazy val fsgercdszfs: RootJsonFormat[CreateCPUReq] = jsonFormat1(CreateCPUReq.apply)
+  implicit lazy val fsgercdszfs: RootJsonFormat[CreateCPUReq] = jsonFormat2(CreateCPUReq.apply)
   implicit lazy val cpuJsonFormat: RootJsonFormat[CPU] = jsonFormat2(CPU.apply)
 
   implicit object SingleGateJsonFormat extends JsonFormat[SingleQbitGate] {
