@@ -12,7 +12,7 @@ import scala.concurrent.duration._
   * Created by mateusz on 04.01.16.
   */
 object CompState {
-  def props(size: Int) = Props(classOf[CompState], size)
+  def props(size: Long) = Props(classOf[CompState], size)
 
   case class StateAmplitude(state: String, value: QValue, lastNo: Long)
 
@@ -23,13 +23,14 @@ object CompState {
 }
 
 
-class CompState(size: Int) extends QuideActor {
+class CompState(size: Long) extends QuideActor {
+
   import context.dispatcher
 
   val completed = mutable.Map.empty[String, QValue]
   var requesters = mutable.MutableList.empty[ActorRef]
-
-  context.system.scheduler.scheduleOnce(500.millis, self, Done)
+  var collected = 0l
+  val a = context.system.scheduler.scheduleOnce(2.seconds, self, Done)
 
   override def receive: Receive = {
     case GetValue =>
@@ -39,6 +40,12 @@ class CompState(size: Int) extends QuideActor {
     case StateAmplitude(idx, value, _) =>
       log.info(s"getting value from qubit $idx")
       completed += idx -> value
+      collected += 1
+      if (collected == size) {
+        requesters.foreach(_ ! completed.toMap)
+        a.cancel()
+        context stop self
+      }
 
     case Done =>
       log.info("timer ends!, sending to requesters")
