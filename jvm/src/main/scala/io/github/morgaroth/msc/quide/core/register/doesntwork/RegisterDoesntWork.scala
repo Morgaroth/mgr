@@ -1,39 +1,35 @@
-package io.github.morgaroth.msc.quide.core.register
+package io.github.morgaroth.msc.quide.core.register.doesntwork
 
-import akka.actor.Props
+import akka.actor.{DeadLetter, Props}
 import io.github.morgaroth.msc.quide.core.actors.QuideActor
 import io.github.morgaroth.msc.quide.core.register.QState.{Execute, GateApply, Ready}
 import io.github.morgaroth.msc.quide.core.register.Register.{ExecuteGate, ReportValue}
-import io.github.morgaroth.msc.quide.model.QValue
+import io.github.morgaroth.msc.quide.core.register.{History, InitState, QState, ZeroState}
 
 /**
-  * Created by mateusz on 03.01.16.
+  * Created by morgaroth on 22.04.2016.
   */
-object RegisterNoDeaths {
+object RegisterDoesntWork {
   def props(size: Int): Props = props(InitState(List.fill(size)('0').mkString))
 
-  def props(init: InitState): Props = Props(classOf[RegisterNoDeaths], init)
+  def props(init: InitState): Props = Props(classOf[RegisterDoesntWork], init)
+
 }
 
-class RegisterNoDeaths(initState: InitState) extends QuideActor {
+
+class RegisterDoesntWork(initState: InitState) extends QuideActor {
 
   if (initState.name.length > 25) {
     log.warning(s"too big state, possible OoM Error (current length is ${initState.name.length}")
   }
 
-  log.info("")
+  // create initial state actor
+  context.actorOf(QStateDoesntWork.props(0, initState.value), initState.name)
+  // create zeroState mechanism
+  val zeroState = context.actorOf(ZeroState.props(self.path, (x: Long, name: String) => context.actorOf(Props(classOf[QStateDoesntWork], x), name)), "zero")
+  val history = context.actorOf(Props[History], "history")
+  context.system.eventStream.subscribe(zeroState, classOf[DeadLetter])
 
-  // experimental
-  def createActors(prefix: String = "") {
-    if (prefix.length < initState.name.length) {
-      createActors(s"${prefix}0")
-      createActors(s"${prefix}1")
-    } else if (prefix.length == initState.name.length) {
-      context.actorOf(QStateNoDeath.props(0, if (prefix.indexOf("1") < 0) initState.value else QValue.`0`), prefix)
-    }
-  }
-
-  createActors()
   var no = 0l
 
   val tasks = collection.mutable.Map.empty[Long, QState.Execute]

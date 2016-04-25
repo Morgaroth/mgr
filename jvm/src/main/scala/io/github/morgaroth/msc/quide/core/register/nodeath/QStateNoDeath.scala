@@ -1,7 +1,7 @@
-package io.github.morgaroth.msc.quide.core.register
+package io.github.morgaroth.msc.quide.core.register.nodeath
 
 import akka.actor.{Cancellable, Props, Stash}
-import io.github.morgaroth.msc.quide.core.actors.QuideActor
+import io.github.morgaroth.msc.quide.core.actors.{QStateActor, QuideActor}
 import io.github.morgaroth.msc.quide.core.monitoring.CompState.StateAmplitude
 import io.github.morgaroth.msc.quide.core.register.QState._
 import io.github.morgaroth.msc.quide.model.QValue
@@ -14,25 +14,13 @@ import scala.concurrent.duration._
   */
 
 object QStateNoDeath {
-
   def props(startNo: Long, init: QValue = QValue.`0`) = Props(classOf[QStateNoDeath], init, startNo)
 }
 
-class QStateNoDeath(init: QValue, startNo: Long) extends QuideActor with Stash {
-
-  val register = self.path.parent
-  val myName = self.path.name
-  val deadAmplitude: QValue = 0.001d
-
-  var amplitude: QValue = init
-  var currentNo = startNo
+class QStateNoDeath(val init: QValue, val startNo: Long) extends QStateActor with Stash {
 
   val deathTime = 50.millis
   var deathTimer: Option[Cancellable] = None
-
-  def loginfo(msg: String) = {
-    log.info(s"|$myName> - $msg")
-  }
 
   loginfo("Born!")
 
@@ -47,7 +35,7 @@ class QStateNoDeath(init: QValue, startNo: Long) extends QuideActor with Stash {
     //      log.error(s"|$myName> - received $e during executiong stage, currento no == $currentNo")
   }
 
-  override def receive: Receive =   {
+  override def receive: Receive = {
     case Execute(o@GateApply(operator: SingleQbitGate, targetBit), no) if currentNo == no =>
       //      loginfo(s"applying 1-qbit operator $operator.(no $no)")
       val (myQbit, opposedState) = findOpposedState(targetBit)
@@ -84,11 +72,5 @@ class QStateNoDeath(init: QValue, startNo: Long) extends QuideActor with Stash {
   def goAhead(): Unit = {
     currentNo += 1
     context.parent ! currentNo
-  }
-
-  def findOpposedState(index: Int): (Char, String) = {
-    val myQbit: Char = myName(myName.length - index - 1)
-    val oponentQbit = if (myQbit == '0') '1' else '0'
-    (myQbit, "%s%c%s".format(myName.slice(0, myName.length - index - 1), oponentQbit, myName.slice(myName.length - index, myName.length)))
   }
 }

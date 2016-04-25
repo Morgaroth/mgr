@@ -2,7 +2,7 @@ package io.github.morgaroth.msc.quide.core.monitoring
 
 import akka.actor.{ActorRef, Props}
 import io.github.morgaroth.msc.quide.core.actors.QuideActor
-import io.github.morgaroth.msc.quide.core.monitoring.CompState.{Done, GetValue, StateAmplitude}
+import io.github.morgaroth.msc.quide.core.monitoring.CompState.{Done, GetValue, StateAmplitude, States}
 import io.github.morgaroth.msc.quide.model.QValue
 
 import scala.collection.mutable
@@ -15,6 +15,8 @@ object CompState {
   def props(size: Long) = Props(classOf[CompState], size)
 
   case class StateAmplitude(state: String, value: QValue, lastNo: Long)
+
+  case class States(alive: Long)
 
   case object GetValue
 
@@ -30,28 +32,33 @@ class CompState(size: Long) extends QuideActor {
   val completed = mutable.Map.empty[String, QValue]
   var requesters = mutable.MutableList.empty[ActorRef]
   var collected = 0l
+  var targetValues = size
   val a = context.system.scheduler.scheduleOnce(2.seconds, self, Done)
 
   override def receive: Receive = {
     case GetValue =>
       log.info(s"registering ${sender()} for getting value")
       requesters += sender()
-
+    case States(howMuch) =>
+      targetValues = howMuch
     case StateAmplitude(idx, value, _) =>
       log.info(s"getting value from qubit $idx")
       if (value >= 0.001d) {
         completed += idx -> value
       }
       collected += 1
-      if (collected == size) {
-        requesters.foreach(_ ! completed.toMap)
+      if (collected == targetValues) {
         a.cancel()
-        context stop self
+        finish
       }
 
     case Done =>
       log.info("timer ends!, sending to requesters")
-      requesters.foreach(_ ! completed.toMap)
-      context stop self
+      finish
+  }
+
+  def finish: Unit = {
+    requesters.foreach(_ ! completed.toMap)
+    context stop self
   }
 }

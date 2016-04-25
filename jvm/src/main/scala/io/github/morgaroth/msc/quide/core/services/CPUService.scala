@@ -9,7 +9,9 @@ import akka.util.Timeout
 import io.github.morgaroth.msc.quide.core.monitoring.CompState
 import io.github.morgaroth.msc.quide.core.monitoring.CompState.GetValue
 import io.github.morgaroth.msc.quide.core.register.Register.{ExecuteGate, ReportValue}
-import io.github.morgaroth.msc.quide.core.register.{Register, RegisterNoDeaths}
+import io.github.morgaroth.msc.quide.core.register.doesntwork.RegisterDoesntWork
+import io.github.morgaroth.msc.quide.core.register.nodeath.RegisterNoDeaths
+import io.github.morgaroth.msc.quide.core.register.sync.RegisterSync
 import io.github.morgaroth.msc.quide.http.{CPU, CreateCPUReq, ExecuteOperatorReq}
 import io.github.morgaroth.msc.quide.model.QValue
 import spray.http.StatusCodes
@@ -56,12 +58,6 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
     cpusPU.get(userId).flatMap(_.get(id)) map[ToResponseMarshallable] { case (register, s) =>
       request.foreach { req =>
         register ! ExecuteGate(req.gate, req.index)
-        //  akka.pattern.after(200.millis, as.scheduler) {
-        //    val listener = as.actorOf(CompState.props(s.size))
-        //    val result = (listener ? GetValue).mapTo[Map[String, QValue]]
-        //    register ! ReportValue(listener)
-        //    result
-        //  }
       }
       StatusCodes.OK
     } getOrElse StatusCodes.BadRequest
@@ -70,7 +66,12 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
   def createNewCPU(userIdMaybe: String)(req: CreateCPUReq): ToResponseMarshallable = {
     log.info(s"creating cpu req $req")
     val id = UUID.randomUUID()
-    val ref = as.actorOf(if (req.full) RegisterNoDeaths.props(req.size) else Register.props(req.size))
+    val props = req.`type` match {
+      case "nodeaths" => RegisterNoDeaths.props(req.size)
+      case "sync" => RegisterSync.props(req.size)
+      case _ => RegisterDoesntWork.props(req.size)
+    }
+    val ref = as.actorOf(props)
     val resp = CPU(req.size, id.toString)
     cpusPU.getOrElseUpdate(userIdMaybe, mutable.Map.empty).update(id, (ref, resp))
     resp

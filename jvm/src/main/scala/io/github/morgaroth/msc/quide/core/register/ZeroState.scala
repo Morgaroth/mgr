@@ -9,7 +9,7 @@ import io.github.morgaroth.msc.quide.core.register.ZeroState.Creator
   * Created by mateusz on 07.03.16.
   */
 object ZeroState {
-  type Creator = (Props, String) => ActorRef
+  type Creator = (Long, String) => ActorRef
 
   def props(registerName: ActorPath, creator: Creator): Props =
     Props(classOf[ZeroState], registerName, creator)
@@ -22,7 +22,7 @@ class ZeroState(registerName: ActorPath, actorCreator: Creator) extends QuideAct
     case DeadLetter(MyAmplitude(ampl, gate, no), from, to) if from.path.parent == registerName =>
       log.info(s"received dead letter from $from (path=${from.path}) to $to (path=${to.path} no is $no")
       log.info(s"creating actor for name ${to.path.name}")
-      val newStateActor = actorCreator(QState.props(no), to.path.name)
+      val newStateActor = actorCreator(no, to.path.name)
       log.info(s"new actor path is ${newStateActor.path}")
       newStateActor.tell(Execute(gate, no), from)
       newStateActor.tell(MyAmplitude(ampl, gate, no), from)
