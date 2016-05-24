@@ -18,14 +18,15 @@ trait QStateActor extends QuideActor {
   val register = self.path.parent
   val parent = context.parent
   val myName = self.path.name
-  val deadAmplitude = 0.001d
+  val deadAmplitude = 0.01d
   var amplitude: QValue = init
   var currentNo = startNo
 
   def findOpposedState(index: Int): (Char, String) = {
+    if (index >= myName.length) throw new RuntimeException(s"illegal size index $index my name $myName, ${myName.length}")
     val myQbit: Char = myName(myName.length - index - 1)
-    val oponentQbit = if (myQbit == '0') '1' else '0'
-    (myQbit, "%s%c%s".format(myName.slice(0, myName.length - index - 1), oponentQbit, myName.slice(myName.length - index, myName.length)))
+    val opposedQbit = if (myQbit == '0') '1' else '0'
+    (myQbit, "%s%c%s".format(myName.slice(0, myName.length - index - 1), opposedQbit, myName.slice(myName.length - index, myName.length)))
   }
 
   def loginfo(msg: String) = {

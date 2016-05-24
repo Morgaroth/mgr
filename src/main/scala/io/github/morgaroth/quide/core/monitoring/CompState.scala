@@ -12,7 +12,7 @@ import scala.concurrent.duration._
   * Created by mateusz on 04.01.16.
   */
 object CompState {
-  def props(size: Long) = Props(classOf[CompState], size)
+  def props(registerSize: Long, waitTime: Option[FiniteDuration] = Some(2.seconds)) = Props(classOf[CompState], math.pow(2, registerSize).toLong, waitTime)
 
   case class StateAmplitude(state: String, value: QValue, lastNo: Long)
 
@@ -22,10 +22,11 @@ object CompState {
 
   case object Done
 
+  type Result = Map[String, QValue]
 }
 
 
-class CompState(size: Long) extends QuideActor {
+class CompState(size: Long, waitTime: Option[FiniteDuration] = Some(2.seconds)) extends QuideActor {
 
   import context.dispatcher
 
@@ -33,31 +34,34 @@ class CompState(size: Long) extends QuideActor {
   var requesters = mutable.MutableList.empty[ActorRef]
   var collected = 0l
   var targetValues = size
-  val a = context.system.scheduler.scheduleOnce(2.seconds, self, Done)
+  val a = waitTime.map(wt => context.system.scheduler.scheduleOnce(wt, self, Done))
+
+  log.info(s"started with $size and wait time $waitTime")
 
   override def receive: Receive = {
     case GetValue =>
-      log.info(s"registering ${sender()} for getting value")
+      //      log.info(s"registering ${sender()} for getting value")
       requesters += sender()
     case States(howMuch) =>
       targetValues = howMuch
+      log.info(s"updating target size to $howMuch")
     case StateAmplitude(idx, value, _) =>
-      log.info(s"getting value from qubit $idx")
+      //      log.info(s"getting value from qubit $idx")
       if (value >= 0.001d) {
         completed += idx -> value
       }
       collected += 1
       if (collected == targetValues) {
-        a.cancel()
-        finish
+        a.foreach(_.cancel())
+        finish()
       }
 
     case Done =>
       log.info("timer ends!, sending to requesters")
-      finish
+      finish()
   }
 
-  def finish: Unit = {
+  def finish(): Unit = {
     requesters.foreach(_ ! completed.toMap)
     context stop self
   }

@@ -3,7 +3,7 @@ package io.github.morgaroth.quide.core.register.nodeath
 import akka.actor.{Cancellable, Props, Stash}
 import io.github.morgaroth.quide.core.actors.QStateActor
 import io.github.morgaroth.quide.core.model.QValue
-import io.github.morgaroth.quide.core.model.gates.{MultiControlledGate, SingleQbitGate}
+import io.github.morgaroth.quide.core.model.gates.{ControlledGate, SingleQbitGate}
 import io.github.morgaroth.quide.core.monitoring.CompState.StateAmplitude
 import io.github.morgaroth.quide.core.register.QState._
 
@@ -37,14 +37,14 @@ class QStateNoDeath(val init: QValue, val startNo: Long) extends QStateActor wit
 
   override def receive: Receive = {
     case Execute(o@GateApply(operator: SingleQbitGate, targetBit), no) if currentNo == no =>
-      //      loginfo(s"applying 1-qbit operator $operator.(no $no)")
+      loginfo(s"applying 1-qbit operator $operator.(no $no)")
       val (myQbit, opposedState) = findOpposedState(targetBit)
       unstashAll()
       context become executing(operator, myQbit)
       context.actorSelection(register / opposedState) ! MyAmplitude(amplitude, o, no)
-    case Execute(o@GateApply(gate: MultiControlledGate, targetBit), no) if currentNo == no =>
+    case Execute(o@GateApply(gate: ControlledGate, targetBit), no) if currentNo == no =>
       if (gate.controlBits.map(idx => myName.charAt(myName.length - idx - 1)).forall(_ == '1')) {
-        //        loginfo(s"applying multi controlled operator $gate.(no $no)")
+        loginfo(s"applying multi controlled operator $gate.(no $no)")
         val (myQbit, opposedState) = findOpposedState(targetBit)
         unstashAll()
         context become executing(gate.gate, myQbit)
@@ -54,7 +54,7 @@ class QStateNoDeath(val init: QValue, val startNo: Long) extends QStateActor wit
         goAhead()
       }
     case Execute(ReportValue(to), no) if currentNo == no =>
-      //      loginfo(s"sending value to reporter.(no $no)")
+      loginfo(s"sending value to reporter.(no $no)")
       to ! StateAmplitude(myName, amplitude, no)
       goAhead()
     case Execute(_, no) if no > currentNo =>

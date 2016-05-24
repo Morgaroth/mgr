@@ -31,7 +31,7 @@ trait marshallers extends DefaultJsonProtocol {
     }
   }
 
-  implicit lazy val multiControlledGateJsonFormat: RootJsonFormat[MultiControlledGate] = jsonFormat(MultiControlledGate.apply, "gate", "controlBits")
+  implicit lazy val multiControlledGateJsonFormat: RootJsonFormat[ControlledGate] = jsonFormat(ControlledGate.apply, "gate", "controlBits")
 
 
   implicit object OperatorJsonFormat extends JsonFormat[Gate] {
@@ -40,13 +40,13 @@ trait marshallers extends DefaultJsonProtocol {
 
     def write(value: Gate): JsValue = value match {
       case c: SingleQbitGate => c.toJson
-      case c: MultiControlledGate => c.toJson
+      case c: ControlledGate => c.toJson
     }
 
 
     val possibleGateDeserializers: List[(JsValue) => Gate] = List(
       _.convertTo[SingleQbitGate],
-      _.convertTo[MultiControlledGate]
+      _.convertTo[ControlledGate]
     )
 
     def read(value: JsValue): Gate = {

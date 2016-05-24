@@ -3,7 +3,7 @@ package io.github.morgaroth.quide.core.register.doesntwork
 import akka.actor.{Props, Stash}
 import io.github.morgaroth.quide.core.actors.QStateActor
 import io.github.morgaroth.quide.core.model.QValue
-import io.github.morgaroth.quide.core.model.gates.{MultiControlledGate, SingleQbitGate}
+import io.github.morgaroth.quide.core.model.gates.{ControlledGate, SingleQbitGate}
 import io.github.morgaroth.quide.core.monitoring.CompState.StateAmplitude
 import io.github.morgaroth.quide.core.register.QState._
 
@@ -39,7 +39,7 @@ class QStateDoesntWork(val init: QValue, val startNo: Long) extends QStateActor 
       unstashAll()
       context become executing(operator, myQbit)
       context.actorSelection(register / opposedState) ! MyAmplitude(amplitude, o, no)
-    case Execute(o@GateApply(gate: MultiControlledGate, targetBit), no) if currentNo == no =>
+    case Execute(o@GateApply(gate: ControlledGate, targetBit), no) if currentNo == no =>
       if (gate.controlBits.map(idx => myName.charAt(myName.length - idx - 1)).forall(_ == '1')) {
         loginfo(s"applying multi controlled operator $gate.(no $no)")
         val (myQbit, opposedState) = findOpposedState(targetBit)

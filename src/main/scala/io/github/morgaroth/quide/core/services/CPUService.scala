@@ -85,7 +85,7 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
 
   def getCPUValue(cpuId: UUID, userId: String): ToResponseMarshallable = {
     cpusPU.get(userId).flatMap(_.get(cpuId)) map[ToResponseMarshallable] { case (register, s) =>
-      val listener = as.actorOf(CompState.props(Math.pow(2, s.size).toLong))
+      val listener = as.actorOf(CompState.props(s.size.toLong))
       val result = (listener ? GetValue).mapTo[Map[String, QValue]]
       register ! ReportValue(listener)
       result

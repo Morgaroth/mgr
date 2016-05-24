@@ -1,23 +1,32 @@
-package io.github.morgaroth.quide.core.register.sync
+package io.github.morgaroth.quide.core.register.exc
 
-import akka.actor.{Props, Stash}
+import akka.actor.{ActorPath, Props, Stash}
 import io.github.morgaroth.quide.core.actors.QStateActor
 import io.github.morgaroth.quide.core.model.QValue
 import io.github.morgaroth.quide.core.model.gates.{ControlledGate, SingleQbitGate}
 import io.github.morgaroth.quide.core.monitoring.CompState.StateAmplitude
 import io.github.morgaroth.quide.core.register.QState._
+import io.github.morgaroth.quide.core.register.exc.QStateExc.ForcedTermination
 
 /**
   * Created by mateusz on 07.03.16.
   */
 
-object QStateSync {
-  def props(startNo: Long, init: QValue = QValue.`0`) = Props(classOf[QStateSync], init, startNo)
+object QStateExc {
+  def props(startNo: Long, init: QValue = QValue.`0`) = Props(classOf[QStateExc], init, startNo)
+
+  case class ForcedTermination(state: ActorPath, no: Long) extends Exception(s"Forced Exec ${state.name} at $no")
+
 }
 
-class QStateSync(val init: QValue, val startNo: Long) extends QStateActor with Stash {
+class QStateExc(val init: QValue, val startNo: Long) extends QStateActor with Stash {
 
   loginfo("Born!")
+
+  def dying: Receive = {
+    case f =>
+      log.error(s"received $f after death")
+  }
 
   def executing(gate: SingleQbitGate, myQbit: Char): Receive = {
     case MyAmplitude(ampl, _, no) if currentNo == no =>
@@ -29,7 +38,9 @@ class QStateSync(val init: QValue, val startNo: Long) extends QStateActor with S
         context become receive
       } else {
         loginfo(s"I'm dying... (no $currentNo)")
-        context.stop(self)
+        context stop self
+        context become dying
+        throw ForcedTermination(self.path, currentNo)
       }
     case e =>
       //      stash()
