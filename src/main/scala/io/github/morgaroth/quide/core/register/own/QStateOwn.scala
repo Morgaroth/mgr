@@ -1,4 +1,4 @@
-package io.github.morgaroth.quide.core.register.sync
+package io.github.morgaroth.quide.core.register.own
 
 import akka.actor.{Props, Stash}
 import io.github.morgaroth.quide.core.actors.QStateActor
@@ -11,12 +11,11 @@ import io.github.morgaroth.quide.core.register.QState._
   * Created by mateusz on 07.03.16.
   */
 
-object QStateSync {
-  def props(startNo: Long, init: QValue = QValue.`0`) = Props(classOf[QStateSync], init, startNo)
-
+object QStateOwn {
+  def props(startNo: Long, init: QValue = QValue.`0`) = Props(classOf[QStateOwn], init, startNo)
 }
 
-class QStateSync(val init: QValue, val startNo: Long) extends QStateActor with Stash {
+class QStateOwn(val init: QValue, val startNo: Long) extends QStateActor with Stash {
 
   loginfo("Born!")
 
@@ -32,9 +31,6 @@ class QStateSync(val init: QValue, val startNo: Long) extends QStateActor with S
         loginfo(s"I'm dying... (no $currentNo)")
         context.stop(self)
       }
-    case Ping =>
-      loginfo(s"got ping during executing $gate (no $currentNo)")
-      parent ! Busy
     case e =>
       //      stash()
       log.error(s"received $e during executiong stage, currento no == $currentNo")
@@ -64,8 +60,6 @@ class QStateSync(val init: QValue, val startNo: Long) extends QStateActor with S
     case m: MyAmplitude =>
       log.info(s"stashing $m")
       stash()
-    case Ping =>
-      parent ! Ready
   }
 
   def startExecutionOf(o: GateApply, operator: SingleQbitGate, targetBit: Int, no: Long): Unit = {

@@ -26,8 +26,6 @@ import scala.language.{implicitConversions, postfixOps}
 /**
   * Created by mateusz on 01.05.2016.
   */
-
-
 trait TestHelpers {
   def printValues(id: String, log: LoggingAdapter, reg: RegisterActions)(implicit t: Timeout, as: ActorSystem) = {
     val data: List[(String, QValue)] = getValueFrom(reg).toList.sortBy(_._1)

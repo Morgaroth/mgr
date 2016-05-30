@@ -1,13 +1,13 @@
-package io.github.morgaroth.quide.core.register.sync
+package io.github.morgaroth.quide.core.register.own
 
-import akka.actor.{ActorPath, Cancellable, DeadLetter, Props, Stash, Terminated}
+import akka.actor.{ActorPath, DeadLetter, Props, Stash, Terminated}
 import io.github.morgaroth.quide.core.actors.QuideActor
 import io.github.morgaroth.quide.core.monitoring.CompState.States
-import io.github.morgaroth.quide.core.register.QState._
+import io.github.morgaroth.quide.core.register.QState.{Execute, GateApply, Ready, ReportValue}
 import io.github.morgaroth.quide.core.register.Register.ExecuteGate
 import io.github.morgaroth.quide.core.register.{InitState, QState, ZeroState}
 import io.github.morgaroth.quide.core.register.ZeroState.Creator
-import io.github.morgaroth.quide.core.register.sync.RegisterSync.{CHECK, INFO}
+import io.github.morgaroth.quide.core.register.sync.RegisterSync.INFO
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -16,18 +16,16 @@ import scala.language.postfixOps
 /**
   * Created by mateusz on 03.01.16.
   */
-object RegisterSync {
+object RegisterOwn {
   def props(size: Int): Props = props(InitState(List.fill(size)('0').mkString))
 
-  def props(init: InitState): Props = Props(classOf[RegisterSync], init)
+  def props(init: InitState): Props = Props(classOf[RegisterOwn], init)
 
   case object INFO
 
-  case object CHECK
-
 }
 
-class RegisterSync(initState: InitState) extends QuideActor with Stash {
+class RegisterOwn(initState: InitState) extends QuideActor with Stash {
 
   import context.dispatcher
 
@@ -38,7 +36,7 @@ class RegisterSync(initState: InitState) extends QuideActor with Stash {
   var isReady = true
   var actors, waiting = collection.mutable.Set.empty[ActorPath]
   // create initial state actor
-  val firstState = context.watch(context.actorOf(QStateSync.props(0, initState.value), initState.name))
+  val firstState = context.watch(context.actorOf(QStateOwn.props(0, initState.value), initState.name))
   actors += firstState.path
 
   def swapCollections(): Unit = {
@@ -51,7 +49,7 @@ class RegisterSync(initState: InitState) extends QuideActor with Stash {
   }
 
   private val creator: Creator = (x: Long, name: String) => {
-    context.watch(context.actorOf(QStateSync.props(x, 0), name))
+    context.watch(context.actorOf(QStateOwn.props(x, 0), name))
   }
   // create zeroState mechanism
   val zeroState = context.actorOf(ZeroState.props(self.path, creator), "zero")
@@ -60,12 +58,6 @@ class RegisterSync(initState: InitState) extends QuideActor with Stash {
   var no = 0l
 
   context.system.scheduler.schedule(2.seconds, 5 seconds, self, INFO)
-  var call: Cancellable = _
-
-  def scheduleCheck() {
-    Option(call).foreach(_.cancel())
-    call = context.system.scheduler.scheduleOnce(1.second, self, CHECK)
-  }
 
   override def receive: Receive = {
     case ExecuteGate(gate, targetBit) if isReady =>
@@ -88,21 +80,14 @@ class RegisterSync(initState: InitState) extends QuideActor with Stash {
     case Terminated(_) if isReady =>
       log.warning("Terminated when ready?")
     case t: Terminated =>
-      log.info(s"receiving terminated from ${t.actor.path.name} (no ${no - 1})")
+      log.info(s"receiving terminated from ${t.actor.path.name} (no ${no-1})")
       checkNext(t.actor.path)
     case Ready =>
-      log.info(s"receiving ready from ${sender().path.name} (no ${no - 1})")
+      log.info(s"receiving ready from ${sender().path.name} (no ${no-1})")
       actors += sender().path
       checkNext(sender().path)
     case INFO =>
-      log.info(s"(no ${no - 1}) current ${context.children.size}, waiting ${waiting.map(_.name)}, actors = ${actors.map(_.name)}")
-    case CHECK if isReady =>
-    case CHECK =>
-      if (waiting.size < actors.size) {
-        waiting.foreach(context.actorSelection(_) ! Ping)
-      } else {
-        scheduleCheck()
-      }
+      log.info(s"(no ${no-1}) current ${context.children.size}, waiting ${waiting.map(_.name)}, actors = ${actors.map(_.name)}")
     case z =>
       log.info(s"received $z")
   }
@@ -113,8 +98,6 @@ class RegisterSync(initState: InitState) extends QuideActor with Stash {
       log.info("is ready! go ahead")
       isReady = true
       unstashAll()
-    } else {
-      scheduleCheck()
     }
   }
 
@@ -123,6 +106,5 @@ class RegisterSync(initState: InitState) extends QuideActor with Stash {
     no += 1
     isReady = false
     swapCollections()
-    scheduleCheck()
   }
 }
