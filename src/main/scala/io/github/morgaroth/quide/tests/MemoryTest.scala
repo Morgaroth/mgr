@@ -16,6 +16,7 @@ import io.github.morgaroth.quide.core.register.QState.ReportValue
 import io.github.morgaroth.quide.core.register.Register.ExecuteGate
 import io.github.morgaroth.quide.core.register.exc.RegisterExc
 import io.github.morgaroth.quide.core.register.nodeath.RegisterNoDeaths
+import io.github.morgaroth.quide.core.register.own.RegisterOwn
 import io.github.morgaroth.quide.core.register.sync.RegisterSync
 
 import scala.compat.Platform
@@ -47,14 +48,19 @@ trait TestHelpers {
 }
 
 object TimeTest extends TestHelpers {
-  implicit val tm: Timeout = 20.seconds
+  implicit val tm: Timeout = 2.minutes
 
   import akka.pattern._
 
-  def doTest(registerSize: Int): Double = {
-    implicit val as = ActorSystem("memorytest")
-    val times: Long = 1 to 5 map { _ =>
-      val reg = RegisterActions(as.actorOf(RegisterExc.props(registerSize)), registerSize)
+  val registers: Map[String, Int => Props] = Map(
+    "io.github.morgaroth.quide.core.register.own.RegisterOwn" -> RegisterOwn.props _
+  )
+
+  def doTest(registerName: String, registerSize: Int): Double = {
+    implicit val as = ActorSystem("timetest")
+//    val times: Long = 1 to 5 map { _ =>
+    val times = {
+      val reg = RegisterActions(as.actorOf(registers(registerName)(registerSize)), registerSize)
       val log = Logging(as, "test")
       log.warning("start")
       val start = Platform.currentTime
@@ -62,18 +68,23 @@ object TimeTest extends TestHelpers {
       log.warning(getValueFrom(reg).toList.sortBy(_._2.modulus).takeRight(2).toString)
       val time = Platform.currentTime - start
       log.error("stopping this shit")
-//      log.error(s"stopping ${Await.result(gracefulStop(reg.reg, 4 minutes), 5 minutes)}")
+      //      log.error(s"stopping ${Await.result(gracefulStop(reg.reg, 4 minutes), 5 minutes)}")
+      as.stop(reg.reg)
       time
-    } sum
+//    } sum
+    }
 
     Await.result(as.terminate(), 1 minute)
-    times * 1.0 / 5
+//    times * 1.0 / 5
+    times
   }
 
   def main(args: Array[String]) {
-    val sizes: Iterable[Int] = if (args.nonEmpty) args.map(_.toInt) else 15 to 15 toList
+    println(args.toList)
+    val registerName = args.head
+    val sizes: Iterable[Int] = if (args.tail.nonEmpty) args.tail.map(_.toInt) else 15 to 15 toList
     val results = sizes map { size =>
-      size -> doTest(size)
+      size -> doTest(registerName, size)
     }
     pwd / "data.d" << results.map(x => s"${x._1}, ${x._2}ms").mkString("\n")
   }
@@ -150,7 +161,7 @@ object MemoryTest extends TestHelpers {
     val result = getValueFrom(reg)
     println(s"result is \n${result.mkString("\n")}")
     Await.result(as.terminate(), tm.duration)
-    (start, 0) ::(walshed, walshedTime - startTime) :: steps.zipWithIndex.map {
+    (start, 0) :: (walshed, walshedTime - startTime) :: steps.zipWithIndex.map {
       case ((mem, ts), idx) if idx == 0 => (mem, ts - walshedTime)
       case ((mem, ts), idx) => (mem, ts - steps(idx - 1)._2)
     }

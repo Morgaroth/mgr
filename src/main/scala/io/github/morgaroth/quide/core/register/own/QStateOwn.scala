@@ -6,6 +6,10 @@ import io.github.morgaroth.quide.core.model.QValue
 import io.github.morgaroth.quide.core.model.gates.{ControlledGate, SingleQbitGate}
 import io.github.morgaroth.quide.core.monitoring.CompState.StateAmplitude
 import io.github.morgaroth.quide.core.register.QState._
+import io.github.morgaroth.quide.core.register.own.QStateOwn.OWN_INFO
+
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 /**
   * Created by mateusz on 07.03.16.
@@ -13,11 +17,18 @@ import io.github.morgaroth.quide.core.register.QState._
 
 object QStateOwn {
   def props(startNo: Long, init: QValue = QValue.`0`) = Props(classOf[QStateOwn], init, startNo)
+
+  case object OWN_INFO
+
 }
 
 class QStateOwn(val init: QValue, val startNo: Long) extends QStateActor with Stash {
 
   loginfo("Born!")
+
+  import context.dispatcher
+
+//  context.system.scheduler.schedule(2.seconds, 5 seconds, self, OWN_INFO)
 
   def executing(gate: SingleQbitGate, myQbit: Char): Receive = {
     case MyAmplitude(ampl, _, no) if currentNo == no =>
@@ -31,12 +42,16 @@ class QStateOwn(val init: QValue, val startNo: Long) extends QStateActor with St
         loginfo(s"I'm dying... (no $currentNo)")
         context.stop(self)
       }
+    case OWN_INFO =>
+      log.error(s"actor $myName in state executing with no $currentNo in $gate")
     case e =>
       //      stash()
-      log.error(s"received $e during executiong stage, currento no == $currentNo")
+      log.error(s"received $e during execution stage, currento no == $currentNo")
   }
 
   override def receive: Receive = {
+    case OWN_INFO =>
+      log.error(s"actor $myName waiting state no $currentNo")
     case Execute(o@GateApply(operator: SingleQbitGate, targetBit), no) if currentNo == no =>
       loginfo(s"applying 1-qbit operator $operator.(no $no)")
       startExecutionOf(o, operator, targetBit, no)

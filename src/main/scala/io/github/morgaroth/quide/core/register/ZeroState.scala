@@ -4,6 +4,7 @@ import akka.actor._
 import io.github.morgaroth.quide.core.actors.QuideActor
 import io.github.morgaroth.quide.core.register.QState.{Execute, GateApply, MyAmplitude, Ready}
 import io.github.morgaroth.quide.core.register.ZeroState.Creator
+import io.github.morgaroth.quide.core.register.own.QStateOwn.OWN_INFO
 
 /** w
   * Created by mateusz on 07.03.16.
@@ -26,6 +27,7 @@ class ZeroState(registerName: ActorPath, actorCreator: Creator) extends QuideAct
       //      log.info(s"new actor path is ${newStateActor.path}")
       newStateActor.tell(Execute(gate, no), from)
       newStateActor.tell(MyAmplitude(ampl, gate, no), from)
+    case DeadLetter(OWN_INFO, _, _) =>
     case DeadLetter(data, from, to) =>
       log.warning(s"received illegal letter DeadLetter($data,${from.path},${to.path})")
     case Execute(_, _) | GateApply(_, _) | Ready =>

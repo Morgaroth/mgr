@@ -12,13 +12,13 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>log/warn.log</file>
+        <file>log/info.log</file>
         <append>true</append>
         <encoder>
             <pattern>%date{MM/dd HH:mm:ss} %-5level %logger{1} - %msg%n</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
+            <level>INFO</level>
         </filter>
 
     </appender>

@@ -27,6 +27,8 @@ object RegisterOwn {
 
 class RegisterOwn(initState: InitState) extends QuideActor with Stash {
 
+  /** Has sets of actors to keep list of actors which doesn't sent confirmation */
+
   import context.dispatcher
 
   if (initState.name.length > 25) {
@@ -68,7 +70,7 @@ class RegisterOwn(initState: InitState) extends QuideActor with Stash {
       //      log.info(s"queuing gate $gate on $targetBit")
       stash()
     case ReportValue(to) if isReady =>
-      log.info(s"publishing task RV")
+      //      log.info(s"publishing task RV")
       to ! States(context.children.size - 1)
       val task = Execute(QState.ReportValue(to), no)
       publishTask(task)
@@ -76,23 +78,24 @@ class RegisterOwn(initState: InitState) extends QuideActor with Stash {
       //      log.info("queuing task RV")
       stash()
     case Ready if isReady =>
-    //      log.warning("Ready when ready?")
+      log.warning("Ready when ready?")
     case Terminated(_) if isReady =>
       log.warning("Terminated when ready?")
     case t: Terminated =>
-      log.info(s"receiving terminated from ${t.actor.path.name} (no ${no-1})")
+      log.info(s"receiving terminated from ${t.actor.path.name} (no ${no - 1})")
       checkNext(t.actor.path)
     case Ready =>
-      log.info(s"receiving ready from ${sender().path.name} (no ${no-1})")
+      log.info(s"receiving ready from ${sender().path.name} (no ${no - 1})")
       actors += sender().path
       checkNext(sender().path)
     case INFO =>
-      log.info(s"(no ${no-1}) current ${context.children.size}, waiting ${waiting.map(_.name)}, actors = ${actors.map(_.name)}")
+      log.info(s"(no ${no - 1}) current ${context.children.size}, waiting ${waiting.map(_.name)}, actors = ${actors.map(_.name)}")
     case z =>
-      log.info(s"received $z")
+        log.info(s"received $z")
   }
 
   def checkNext(without: ActorPath): Unit = {
+    log.info(s"without $without ($no)")
     waiting -= without
     if (waiting.isEmpty && actors.size == context.children.size - 1) {
       log.info("is ready! go ahead")
