@@ -11,13 +11,15 @@ typeName = argv[1]
 size = int(argv[2])
 
 types = {
-    'own': 'io.github.morgaroth.quide.core.register.own.RegisterOwn'
+    'own': 'io.github.morgaroth.quide.core.register.own.RegisterOwn',
+    'sync': 'io.github.morgaroth.quide.core.register.sync.RegisterSync',
+    'ownterm': 'io.github.morgaroth.quide.core.register.own_terminated.sync.RegisterOwnTerminated',
 }
 
 type = types.get(typeName)
 
 if type is None:
-    print('type {} not recognized'.format(type))
+    print('type {} not recognized'.format(typeName))
     exit(-2)
 
 tester = 'io.github.morgaroth.quide.tests.TimeTest'

@@ -17,6 +17,7 @@ object QState {
   case class Execute(action: Action, taskNo: Long)
   case object Ready extends Action
   case object Ping extends Action
+  case object INFO extends Action
   case object Busy extends Action
   case class MyAmplitude(ampl: QValue, op: GateApply, taskNo: Long)
   //@formatter:on

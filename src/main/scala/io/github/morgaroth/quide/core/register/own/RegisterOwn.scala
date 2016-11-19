@@ -20,9 +20,6 @@ object RegisterOwn {
   def props(size: Int): Props = props(InitState(List.fill(size)('0').mkString))
 
   def props(init: InitState): Props = Props(classOf[RegisterOwn], init)
-
-  case object INFO
-
 }
 
 class RegisterOwn(initState: InitState) extends QuideActor with Stash {

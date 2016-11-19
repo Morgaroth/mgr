@@ -1,6 +1,6 @@
 package io.github.morgaroth.quide.core.register
 
-import akka.actor.ActorRef
+import akka.actor.{ActorPath, ActorRef}
 import io.github.morgaroth.quide.core.model.gates.Gate
 
 /**
@@ -13,4 +13,7 @@ object Register {
   case class ExecuteGate(gate: Gate, qbit: Int)
   case class ReportValue(to: ActorRef)
   //@formatter:on
+
+  case class ImDied(path: ActorPath)
+
 }

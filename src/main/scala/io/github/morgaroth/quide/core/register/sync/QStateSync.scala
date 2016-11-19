@@ -7,6 +7,8 @@ import io.github.morgaroth.quide.core.model.gates.{ControlledGate, SingleQbitGat
 import io.github.morgaroth.quide.core.monitoring.CompState.StateAmplitude
 import io.github.morgaroth.quide.core.register.QState._
 
+import scala.concurrent.duration._
+
 /**
   * Created by mateusz on 07.03.16.
   */
@@ -17,8 +19,9 @@ object QStateSync {
 }
 
 class QStateSync(val init: QValue, val startNo: Long) extends QStateActor with Stash {
-
+import context.dispatcher
   loginfo("Born!")
+  context.system.scheduler.schedule(2.seconds, 5 seconds, self, INFO)
 
   def executing(gate: SingleQbitGate, myQbit: Char): Receive = {
     case MyAmplitude(ampl, _, no) if currentNo == no =>
@@ -35,12 +38,16 @@ class QStateSync(val init: QValue, val startNo: Long) extends QStateActor with S
     case Ping =>
       loginfo(s"got ping during executing $gate (no $currentNo)")
       parent ! Busy
+    case INFO =>
+      log.error(s"actor $myName in state executing with no $currentNo in $gate")
     case e =>
       //      stash()
       log.error(s"received $e during executiong stage, currento no == $currentNo")
   }
 
   override def receive: Receive = {
+    case INFO =>
+      log.error(s"actor $myName waiting state no $currentNo")
     case Execute(o@GateApply(operator: SingleQbitGate, targetBit), no) if currentNo == no =>
       loginfo(s"applying 1-qbit operator $operator.(no $no)")
       startExecutionOf(o, operator, targetBit, no)
