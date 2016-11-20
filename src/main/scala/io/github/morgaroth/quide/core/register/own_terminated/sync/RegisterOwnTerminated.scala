@@ -131,7 +131,7 @@ class RegisterOwnTerminated(initState: InitState) extends QuideActor with Stash 
   }
 
   def publishTask(task: Execute): Unit = {
-    log.info(s"Task: ${task.taskNo}")
+    log.info(s"Task: ${task.taskNo}, task ${task.action}")
     context.children.foreach(_ ! task)
     no += 1
     isReady = false

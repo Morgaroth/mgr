@@ -6,6 +6,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.event.{Logging, LoggingAdapter}
 import akka.pattern.ask
 import akka.util.Timeout
+import better.files.Cmds._
 import io.github.morgaroth.quide.core.model.QValue
 import io.github.morgaroth.quide.core.model.gates.{ControlledGate, Gate, H, X}
 import io.github.morgaroth.quide.core.monitoring.CompState
@@ -20,6 +21,11 @@ import scala.language.{implicitConversions, postfixOps}
   * Created by mateusz on 01.05.2016.
   */
 trait TestHelpers {
+
+  def saveValue(name: String, registerName: String, registerSize: Int, value: Double): Unit = {
+    pwd / "data.data" << s"$name:${registerName.split('.').last}:$registerSize:$value"
+  }
+
   def printValues(id: String, log: LoggingAdapter, reg: RegisterActions)(implicit t: Timeout, as: ActorSystem) = {
     val data: List[(String, QValue)] = getValueFrom(reg).toList.sortBy(_._1)
     log.info(s"result $id is \n${data.map(x => s"${x._1}: ${x._2.pretty}  -- ${List.fill(x._2.modulus * 10 toInt)('*').mkString}").mkString("\n")}")
@@ -40,7 +46,6 @@ trait TestHelpers {
 }
 
 
-
 //object HeavyMemoryTest {
 //
 //  def main(args: Array[String]) {
@@ -53,8 +58,6 @@ trait TestHelpers {
 //    println((results.sum * 100.0 / results.size) / 100 toInt)
 //  }
 //}
-
-
 
 
 object Helpers {
@@ -105,14 +108,14 @@ case class RegisterActions(reg: ActorRef, size: Int)(implicit as: ActorSystem) {
     run(H, bank)
   }
 
-//  def runGrover(oracledValue: Int) = {
-//    val rounds = math.floor(math.Pi / 4 * math.sqrt(size)).toInt
-//    log.warning(s"grovering $oracledValue using $rounds rounds for size $size")
-//    run(X, 0)
-//    runWalsh()
-//    1 to rounds foreach { _ =>
-//      runOracle(oracledValue)
-//      runInversion()
-//    }
-//  }
+  //  def runGrover(oracledValue: Int) = {
+  //    val rounds = math.floor(math.Pi / 4 * math.sqrt(size)).toInt
+  //    log.warning(s"grovering $oracledValue using $rounds rounds for size $size")
+  //    run(X, 0)
+  //    runWalsh()
+  //    1 to rounds foreach { _ =>
+  //      runOracle(oracledValue)
+  //      runInversion()
+  //    }
+  //  }
 }

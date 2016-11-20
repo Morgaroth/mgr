@@ -44,13 +44,12 @@ case class FloatComplex(re: Double, im: Double) extends Ordered[FloatComplex] {
   }
 
   // String representation
-  override def toString() =
-    this match {
-      case FloatComplex.i => "i"
-      case FloatComplex(r, 0) => r.toString
-      case FloatComplex(0, i) => i.toString + "*i"
-      case _ => asString
-    }
+  override def toString() = this match {
+    case FloatComplex.i => "i"
+    case FloatComplex(r, 0) => r.toString
+    case FloatComplex(0, i) => i.toString + "*i"
+    case _ => asString
+  }
 
   def pretty = this match {
     case FloatComplex.i => "i"
@@ -60,7 +59,7 @@ case class FloatComplex(re: Double, im: Double) extends Ordered[FloatComplex] {
   }
 
 
-  private def asString =
+  def asString =
     re + (if (im < 0) "-" + -im else "+" + im) + "*i"
 }
 

@@ -32,11 +32,13 @@ trait QStateActor extends QuideActor {
   def loginfo(msg: String) = {
     log.info(s"|$myName> - $msg")
   }
+//
+//  def ShallIDead() = {
+//    if (amplitude <= deadAmplitude) {
+//      context stop self
+//      true
+//    } else false
+//  }
 
-  def ShallIDead() = {
-    if (amplitude <= deadAmplitude) {
-      context stop self
-      true
-    } else false
-  }
+  def ShallIDead() = false
 }

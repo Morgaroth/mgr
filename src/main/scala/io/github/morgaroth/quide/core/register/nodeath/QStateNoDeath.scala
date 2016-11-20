@@ -22,7 +22,7 @@ class QStateNoDeath(val init: QValue, val startNo: Long) extends QStateActor wit
   val deathTime = 50.millis
   var deathTimer: Option[Cancellable] = None
 
-  loginfo("Born!")
+//  loginfo("Born!")
 
   def executing(gate: SingleQbitGate, myQbit: Char): Receive = {
     case MyAmplitude(ampl, _, no) if currentNo == no =>
@@ -37,14 +37,14 @@ class QStateNoDeath(val init: QValue, val startNo: Long) extends QStateActor wit
 
   override def receive: Receive = {
     case Execute(o@GateApply(operator: SingleQbitGate, targetBit), no) if currentNo == no =>
-      loginfo(s"applying 1-qbit operator $operator.(no $no)")
+//      loginfo(s"applying 1-qbit operator $operator.(no $no)")
       val (myQbit, opposedState) = findOpposedState(targetBit)
       unstashAll()
       context become executing(operator, myQbit)
       context.actorSelection(register / opposedState) ! MyAmplitude(amplitude, o, no)
     case Execute(o@GateApply(gate: ControlledGate, targetBit), no) if currentNo == no =>
       if (gate.controlBits.map(idx => myName.charAt(myName.length - idx - 1)).forall(_ == '1')) {
-        loginfo(s"applying multi controlled operator $gate.(no $no)")
+//        loginfo(s"applying multi controlled operator $gate.(no $no)")
         val (myQbit, opposedState) = findOpposedState(targetBit)
         unstashAll()
         context become executing(gate.gate, myQbit)
@@ -54,7 +54,7 @@ class QStateNoDeath(val init: QValue, val startNo: Long) extends QStateActor wit
         goAhead()
       }
     case Execute(ReportValue(to), no) if currentNo == no =>
-      loginfo(s"sending value to reporter.(no $no)")
+//      loginfo(s"sending value to reporter.(no $no)")
       to ! StateAmplitude(myName, amplitude, no)
       goAhead()
     case Execute(_, no) if no > currentNo =>

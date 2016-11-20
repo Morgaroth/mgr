@@ -12,7 +12,9 @@ object QState {
 
   //@formatter:off
   trait Action
-  case class GateApply(operator: Gate, firstQbit: Int) extends Action
+  case class GateApply(operator: Gate, firstQbit: Int) extends Action{
+    override def toString: String = s"$operator on $firstQbit"
+}
   case class ReportValue(to: ActorRef) extends Action
   case class Execute(action: Action, taskNo: Long)
   case object Ready extends Action
