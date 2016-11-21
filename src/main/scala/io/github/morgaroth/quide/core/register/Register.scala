@@ -16,4 +16,6 @@ object Register {
 
   case class ImDied(path: ActorPath)
 
+  case class ImDiedOwn(name: String, ref: ActorRef)
+
 }

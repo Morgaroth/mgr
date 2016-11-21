@@ -8,6 +8,7 @@ import akka.util.Timeout
 import better.files.Cmds._
 import io.github.morgaroth.quide.core.model.QValue
 import io.github.morgaroth.quide.core.model.gates.X
+import io.github.morgaroth.quide.core.register.custom_map.RegisterCustomMap
 import io.github.morgaroth.quide.core.register.nodeath.RegisterNoDeaths
 import io.github.morgaroth.quide.core.register.own.RegisterOwn
 import io.github.morgaroth.quide.core.register.own_terminated.RegisterOwnTerminated
@@ -28,6 +29,7 @@ object TimeTest extends TestHelpers {
     "io.github.morgaroth.quide.core.register.own.RegisterOwn" -> RegisterOwn.props _,
     "io.github.morgaroth.quide.core.register.own_terminated.RegisterOwnTerminated" -> RegisterOwnTerminated.props _,
     "io.github.morgaroth.quide.core.register.nodeath.RegisterNoDeaths" -> RegisterNoDeaths.props _,
+    "io.github.morgaroth.quide.core.register.custom_map.RegisterCustomMap" -> RegisterCustomMap.props _,
     "io.github.morgaroth.quide.core.register.sync.RegisterSync" -> RegisterSync.props _
   )
 
@@ -101,6 +103,5 @@ object TimeTest extends TestHelpers {
     val results = sizes map { size =>
       size -> doTest(registerName, size)
     }
-    pwd / "data.d" << results.map(x => s"${x._1}, ${x._2}ms").mkString("\n")
   }
 }

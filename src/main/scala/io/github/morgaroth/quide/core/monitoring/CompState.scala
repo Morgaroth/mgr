@@ -36,7 +36,7 @@ class CompState(size: Long, waitTime: Option[FiniteDuration] = Some(2.seconds)) 
   var targetValues = size
   val a = waitTime.map(wt => context.system.scheduler.scheduleOnce(wt, self, Done))
 
-//  log.info(s"started with $size and wait time $waitTime")
+  //  log.info(s"started with $size and wait time $waitTime")
 
   override def receive: Receive = {
     case GetValue =>
@@ -44,7 +44,7 @@ class CompState(size: Long, waitTime: Option[FiniteDuration] = Some(2.seconds)) 
       requesters += sender()
     case States(howMuch) =>
       targetValues = howMuch
-//      log.info(s"updating target size to $howMuch")
+    //      log.info(s"updating target size to $howMuch")
     case StateAmplitude(idx, value, _) =>
       //      log.info(s"getting value from qubit $idx")
       if (value >= 0.001d) {
