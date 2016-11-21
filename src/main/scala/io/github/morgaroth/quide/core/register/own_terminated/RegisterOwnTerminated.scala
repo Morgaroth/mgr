@@ -1,4 +1,4 @@
-package io.github.morgaroth.quide.core.register.own_terminated.sync
+package io.github.morgaroth.quide.core.register.own_terminated
 
 import akka.actor.{ActorPath, Cancellable, DeadLetter, Props, Stash, Terminated}
 import io.github.morgaroth.quide.core.actors.QuideActor

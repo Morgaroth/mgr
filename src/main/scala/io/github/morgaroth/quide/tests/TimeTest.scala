@@ -10,7 +10,7 @@ import io.github.morgaroth.quide.core.model.QValue
 import io.github.morgaroth.quide.core.model.gates.X
 import io.github.morgaroth.quide.core.register.nodeath.RegisterNoDeaths
 import io.github.morgaroth.quide.core.register.own.RegisterOwn
-import io.github.morgaroth.quide.core.register.own_terminated.sync.RegisterOwnTerminated
+import io.github.morgaroth.quide.core.register.own_terminated.RegisterOwnTerminated
 import io.github.morgaroth.quide.core.register.sync.RegisterSync
 
 import scala.compat.Platform
@@ -26,7 +26,7 @@ object TimeTest extends TestHelpers {
 
   val registers: Map[String, Int => Props] = Map(
     "io.github.morgaroth.quide.core.register.own.RegisterOwn" -> RegisterOwn.props _,
-    "io.github.morgaroth.quide.core.register.own_terminated.sync.RegisterOwnTerminated" -> RegisterOwnTerminated.props _,
+    "io.github.morgaroth.quide.core.register.own_terminated.RegisterOwnTerminated" -> RegisterOwnTerminated.props _,
     "io.github.morgaroth.quide.core.register.nodeath.RegisterNoDeaths" -> RegisterNoDeaths.props _,
     "io.github.morgaroth.quide.core.register.sync.RegisterSync" -> RegisterSync.props _
   )

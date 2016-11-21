@@ -13,7 +13,7 @@ size = int(argv[2])
 types = {
     'own': 'io.github.morgaroth.quide.core.register.own.RegisterOwn',
     'sync': 'io.github.morgaroth.quide.core.register.sync.RegisterSync',
-    'ownterm': 'io.github.morgaroth.quide.core.register.own_terminated.sync.RegisterOwnTerminated',
+    'ownterm': 'io.github.morgaroth.quide.core.register.own_terminated.RegisterOwnTerminated',
     'nodeath': 'io.github.morgaroth.quide.core.register.nodeath.RegisterNoDeaths',
 }
 

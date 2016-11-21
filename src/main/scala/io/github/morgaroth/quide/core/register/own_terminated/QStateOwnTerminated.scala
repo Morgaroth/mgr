@@ -1,4 +1,4 @@
-package io.github.morgaroth.quide.core.register.own_terminated.sync
+package io.github.morgaroth.quide.core.register.own_terminated
 
 import akka.actor.{Props, Stash}
 import io.github.morgaroth.quide.core.actors.QStateActor
