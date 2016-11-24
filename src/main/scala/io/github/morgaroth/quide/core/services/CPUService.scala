@@ -10,7 +10,9 @@ import io.github.morgaroth.quide.core.http.{CPU, CreateCPUReq, ExecuteOperatorRe
 import io.github.morgaroth.quide.core.model.QValue
 import io.github.morgaroth.quide.core.monitoring.CompState
 import io.github.morgaroth.quide.core.monitoring.CompState.GetValue
-import io.github.morgaroth.quide.core.register.Register.{ExecuteGate, ReportValue}
+import io.github.morgaroth.quide.core.register.QState.ReportValue
+import io.github.morgaroth.quide.core.register.Register.ExecuteGate
+import io.github.morgaroth.quide.core.register.custom_map.RegisterCustomMap
 import io.github.morgaroth.quide.core.register.doesntwork.RegisterDoesntWork
 import io.github.morgaroth.quide.core.register.nodeath.RegisterNoDeaths
 import io.github.morgaroth.quide.core.register.sync.RegisterSync
@@ -38,7 +40,7 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
 
   //@formatter:off
   val route =
-    headerValueByName("X-User-Id") { userId =>
+    headerValueByName("x-user-id") { userId =>
       pathEnd {
         get(complete(getAvailableCPUS(userId))) ~
         post(handleWith(createNewCPU(userId)))
@@ -69,6 +71,7 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
     val props = req.`type` match {
       case "nodeaths" => RegisterNoDeaths.props(req.size)
       case "sync" => RegisterSync.props(req.size)
+      case "customap" => RegisterCustomMap.props(req.size)
       case _ => RegisterDoesntWork.props(req.size)
     }
     val ref = as.actorOf(props)
@@ -85,7 +88,7 @@ class CPUService(as: ActorSystem) extends Directives with marshallers with Spray
 
   def getCPUValue(cpuId: UUID, userId: String): ToResponseMarshallable = {
     cpusPU.get(userId).flatMap(_.get(cpuId)) map[ToResponseMarshallable] { case (register, s) =>
-      val listener = as.actorOf(CompState.props(s.size.toLong))
+      val listener = as.actorOf(CompState.props(s.size.toLong, None))
       val result = (listener ? GetValue).mapTo[Map[String, QValue]]
       register ! ReportValue(listener)
       result

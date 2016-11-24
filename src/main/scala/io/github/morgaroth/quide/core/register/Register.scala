@@ -11,7 +11,7 @@ object Register {
   //@formatter:off
   case class Step()
   case class ExecuteGate(gate: Gate, qbit: Int)
-  case class ReportValue(to: ActorRef)
+//  case class ReportValue(to: ActorRef)
   //@formatter:on
 
   case class ImDied(path: ActorPath)
