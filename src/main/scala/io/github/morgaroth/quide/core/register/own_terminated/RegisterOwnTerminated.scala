@@ -114,7 +114,7 @@ class RegisterOwnTerminated(initState: InitState) extends QuideActor with Stash 
       scheduleCheck()
       checkNext(self.path)
     case z =>
-      log.info(s"received $z")
+      log.info(s"received $z from ${sender()}")
   }
 
   def checkNext(without: ActorPath): Unit = {
@@ -122,7 +122,7 @@ class RegisterOwnTerminated(initState: InitState) extends QuideActor with Stash 
     //    log.info(s"waiting.isEmpty ${waiting.isEmpty}, actors.size ${actors.size} == context.children.size ${context.children.size}")
     //    context.children.map(x => println(x.path))
     if (waiting.isEmpty && actors.size == context.children.size - 1) {
-//      log.info("is ready! go ahead")
+      //      log.info("is ready! go ahead")
       isReady = true
       unstashAll()
     } else {
