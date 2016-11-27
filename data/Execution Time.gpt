@@ -1,0 +1,18 @@
+#!/usr/bin/env gnuplot
+
+set terminal svg fname 'Verdana' fsize 10
+set output 'Execution Time.svg'
+
+set datafile separator ","
+set title "Wykres czasu symulacji"
+set xlabel "QB [n]"
+set ylabel "Czas [ms]"
+set logscale y 2
+set key left top
+
+set xrange [3:14]
+
+# plot 'round-time.csv' using 1:2
+plot    '<grep RegisterSync execution-time.csv' using 2:3 with lines linetype 1 title "Sync", "" using 2:3:5 with yerrorbars linetype 1 notitle, \
+        '<grep RegisterOwn execution-time.csv' using 2:3 with lines title "Own" linetype 2, "" using 2:3:5 with yerrorbars linetype 2 notitle, \
+        '<grep RegisterCustomMap execution-time.csv' using 2:3 with lines title "Map" linetype 3, "" using 2:3:5 with yerrorbars linetype 3 notitle

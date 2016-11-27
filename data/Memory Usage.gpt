@@ -1,0 +1,23 @@
+#!/usr/bin/env gnuplot
+
+set terminal svg fname 'Verdana' fsize 10
+set output 'Memory Usage.svg'
+
+set datafile separator ","
+set title "Wykres użycia pamięci"
+set xlabel "QB [n]"
+set ylabel "Zajętość pamięci [kB]"
+set logscale y 2
+set key left top
+
+set xtics 1
+
+set xrange [3:14]
+
+# plot 'round-time.csv' using 1:2
+plot    '<grep RegisterSync round-memory-usage.csv' using 2:3 with lines title "Sync" linetype 1, \
+            "" using 2:3:5 with yerrorbars linetype 1 notitle, \
+        '<grep RegisterOwn round-memory-usage.csv' using 2:3 with lines title "Own" linetype 2, \
+            "" using 2:3:5 with yerrorbars linetype 2 notitle, \
+        '<grep RegisterCustomMap round-memory-usage.csv' using 2:3 with lines title "Map" linetype 3, \
+            "" using 2:3:5 with yerrorbars linetype 3 notitle

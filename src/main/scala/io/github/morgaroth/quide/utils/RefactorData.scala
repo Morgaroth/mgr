@@ -32,7 +32,7 @@ object RefactorData {
     fullParsedData.map {
       case (kind, results) =>
         val flatten = results.zipWithIndex.flatMap { case ((register, res), idx) =>
-          res.toList.sortBy(_._1).map(x => register :: (x._1 - idx * 1.0 / 15).toString :: x._2.map(_.toString) mkString ",")
+          res.toList.sortBy(_._1).map(x => register :: (x._1 - idx * 1.0 / 16).toString :: x._2.map(_.toString) mkString ",")
         }.toSeq
         (pwd / "data" / s"$kind.csv")
           .delete(swallowIOExceptions = true)

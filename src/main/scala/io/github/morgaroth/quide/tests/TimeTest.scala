@@ -47,6 +47,9 @@ object TimeTest extends TestHelpers {
     //      val rounds = problemSize * 2
     val oracledValue = 2
     log.warning(s"grovering $oracledValue using $rounds rounds for size $registerSize")
+    Helpers.usedMemKB
+    Thread.sleep(5.seconds.toMillis)
+    val initMemory = Helpers.usedMemKB
     reg.run(X, 0)
     reg.runWalsh()
     //      val walshed = getValue(reg)
@@ -62,7 +65,6 @@ object TimeTest extends TestHelpers {
     //      (0 to rounds toList) foreach { _ =>
     var end = true
     var roundsEffecctive = 0
-    val initMemory = Helpers.usedMemKB
     execTime += (Platform.currentTime - start)
     while (end) {
       val start = Platform.currentTime
@@ -99,10 +101,10 @@ object TimeTest extends TestHelpers {
     val registerName = args.head
     val sizes: Iterable[Int] = if (args.tail.nonEmpty) args.tail.map(_.toInt) else 15 to 15 toList
 
-    1 to 5 map { _ =>
+//    1 to 5 map { _ =>
       sizes map { size =>
         size -> doTest(registerName, size)
       }
-    }
+//    }
   }
 }
