@@ -39,7 +39,8 @@ object TimeTest extends TestHelpers {
     val reg = RegisterActions(as.actorOf(registers(registerName)(registerSize)), registerSize)
     val log = Logging(as, "test")
     log.warning("start")
-    val start = Platform.currentTime
+    var start = Platform.currentTime
+    var execTime = 0L
     val problemSize = registerSize - 1
 
     val rounds = (math.Pi / 4 * registerSize).toInt
@@ -61,13 +62,18 @@ object TimeTest extends TestHelpers {
     //      (0 to rounds toList) foreach { _ =>
     var end = true
     var roundsEffecctive = 0
+    val initMemory = Helpers.usedMemKB
+    execTime += (Platform.currentTime - start)
     while (end) {
       val start = Platform.currentTime
       roundsEffecctive += 1
       reg.runOracle(oracledValue)
       reg.runInversion()
       val values = getValueFrom(reg).toList.sortBy(_._2.modulus)
-      saveVal("round-time", Platform.currentTime - start)
+      val roundTime = Platform.currentTime - start
+      execTime += roundTime
+      saveVal("round-time", roundTime)
+      saveVal("round-memory-usage", Helpers.usedMemKB - initMemory)
       if (values.takeRight(2).map(_._2.modulus).map(x => x * x).sum > 0.97) {
         log.warning(s"End, effective rounds $roundsEffecctive for problem qbits $problemSize")
         saveVal("effective-rounds", roundsEffecctive)
@@ -75,16 +81,16 @@ object TimeTest extends TestHelpers {
       }
       println(values.takeRight(4).map(x => (x._1, x._2.toString())))
     }
-
+    start = Platform.currentTime
     val values: List[(String, QValue, Double)] = getValueFrom(reg).toList.sortBy(_._2.modulus).map(x => (x._1, x._2, (x._2.modulus * x._2.modulus * 10000).toInt / 100.0))
     //      values.foreach(println)
     val propSum = values.map(x => x._2.modulus * x._2.modulus).sum
     log.warning(s"${values.takeRight(5).toString} results ${values.size}, propSum $propSum")
-    val time = Platform.currentTime - start
+    execTime += (Platform.currentTime - start)
     log.error("stopping this shit")
     //      log.error(s"stopping ${Await.result(gracefulStop(reg.reg, 4 minutes), 5 minutes)}")
     as.stop(reg.reg)
-    saveVal("execution-time", time)
+    saveVal("execution-time", execTime)
     Await.result(as.terminate(), 1 minute)
     //    times * 1.0 / 5
   }

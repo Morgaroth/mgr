@@ -5,11 +5,10 @@ import io.github.morgaroth.quide.core.actors.QuideActor
 import io.github.morgaroth.quide.core.monitoring.CompState.States
 import io.github.morgaroth.quide.core.register.QState.{Execute, GateApply, Ready, ReportValue}
 import io.github.morgaroth.quide.core.register.Register.ExecuteGate
-import io.github.morgaroth.quide.core.register.{InitState, QState, ZeroState}
 import io.github.morgaroth.quide.core.register.ZeroState.Creator
 import io.github.morgaroth.quide.core.register.sync.RegisterSync.INFO
+import io.github.morgaroth.quide.core.register.{InitState, QState, ZeroState}
 
-import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -60,7 +59,7 @@ class RegisterOwn(initState: InitState) extends QuideActor with Stash {
 
   override def receive: Receive = {
     case ExecuteGate(gate, targetBit) if isReady =>
-      log.info(s"publishing task $gate on $targetBit")
+      //      log.info(s"publishing task $gate on $targetBit")
       val task = Execute(GateApply(gate, targetBit), no)
       publishTask(task)
     case ExecuteGate(gate, targetBit) =>
@@ -79,29 +78,30 @@ class RegisterOwn(initState: InitState) extends QuideActor with Stash {
     case Terminated(_) if isReady =>
       log.warning("Terminated when ready?")
     case t: Terminated =>
-      log.info(s"receiving terminated from ${t.actor.path.name} (no ${no - 1})")
+      //      log.info(s"receiving terminated from ${t.actor.path.name} (no ${no - 1})")
       checkNext(t.actor.path)
     case Ready =>
-      log.info(s"receiving ready from ${sender().path.name} (no ${no - 1})")
+      //      log.info(s"receiving ready from ${sender().path.name} (no ${no - 1})")
       actors += sender().path
       checkNext(sender().path)
     case INFO =>
-      log.info(s"(no ${no - 1}) current ${context.children.size}, waiting ${waiting.map(_.name)}, actors = ${actors.map(_.name)}")
+    //      log.info(s"(no ${no - 1}) current ${context.children.size}, waiting ${waiting.map(_.name)}, actors = ${actors.map(_.name)}")
     case z =>
-        log.info(s"received $z")
+      log.info(s"received $z")
   }
 
   def checkNext(without: ActorPath): Unit = {
-    log.info(s"without $without ($no)")
+    //    log.info(s"without $without ($no)")
     waiting -= without
     if (waiting.isEmpty && actors.size == context.children.size - 1) {
-      log.info("is ready! go ahead")
+      //      log.info("is ready! go ahead")
       isReady = true
       unstashAll()
     }
   }
 
   def publishTask(task: Execute): Unit = {
+    log.info(s"Task: ${task.taskNo}, task ${task.action}")
     context.children.foreach(_ ! task)
     no += 1
     isReady = false

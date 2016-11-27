@@ -5,11 +5,10 @@ import io.github.morgaroth.quide.core.actors.QuideActor
 import io.github.morgaroth.quide.core.monitoring.CompState.States
 import io.github.morgaroth.quide.core.register.QState._
 import io.github.morgaroth.quide.core.register.Register.ExecuteGate
-import io.github.morgaroth.quide.core.register.{InitState, QState, ZeroState}
 import io.github.morgaroth.quide.core.register.ZeroState.Creator
 import io.github.morgaroth.quide.core.register.sync.RegisterSync.{CHECK, INFO}
+import io.github.morgaroth.quide.core.register.{InitState, QState, ZeroState}
 
-import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -68,20 +67,20 @@ class RegisterSync(initState: InitState) extends QuideActor with Stash {
   }
 
   override def receive: Receive = {
-    case any if {
-      log.info(s"------------- any $any from ${sender()}")
-      false
-    } =>
-
+    //    case any if {
+    //      log.info(s"------------- any $any from ${sender()}")
+    //      false
+    //    } =>
+    //
     case ExecuteGate(gate, targetBit) if isReady =>
-      log.info(s"publishing task $gate on $targetBit")
+      //      log.info(s"publishing task $gate on $targetBit")
       val task = Execute(GateApply(gate, targetBit), no)
       publishTask(task)
     case ExecuteGate(gate, targetBit) =>
       //      log.info(s"queuing gate $gate on $targetBit")
       stash()
     case ReportValue(to) if isReady =>
-      log.info(s"publishing task RV")
+      //      log.info(s"publishing task RV")
       to ! States(context.children.size - 1)
       val task = Execute(QState.ReportValue(to), no)
       publishTask(task)
@@ -93,17 +92,17 @@ class RegisterSync(initState: InitState) extends QuideActor with Stash {
     case Terminated(_) if isReady =>
       log.warning("Terminated when ready?")
     case t: Terminated =>
-      log.info(s"receiving terminated from ${t.actor.path.name} (no ${no - 1})")
+      //      log.info(s"receiving terminated from ${t.actor.path.name} (no ${no - 1})")
       checkNext(t.actor.path)
     case Ready =>
-      log.info(s"receiving ready from ${sender().path.name} (no ${no - 1})")
+      //      log.info(s"receiving ready from ${sender().path.name} (no ${no - 1})")
       actors += sender().path
       checkNext(sender().path)
     case INFO =>
     //      log.info(s"(no ${no - 1}) current ${context.children.size}, waiting ${waiting.map(_.name)}, actors = ${actors.map(_.name)}")
     case CHECK if isReady =>
     case CHECK =>
-      log.info(s"CHECKING (no ${no - 1}) current ${context.children.size}, waiting ${waiting.map(_.name)}, actors = ${actors.map(_.name)}")
+      //      log.info(s"CHECKING (no ${no - 1}) current ${context.children.size}, waiting ${waiting.map(_.name)}, actors = ${actors.map(_.name)}")
       if (waiting.size < actors.size) {
         waiting.foreach(context.actorSelection(_) ! Ping)
         //      } else {
@@ -117,7 +116,7 @@ class RegisterSync(initState: InitState) extends QuideActor with Stash {
   def checkNext(without: ActorPath): Unit = {
     waiting -= without
     if (waiting.isEmpty && actors.size == context.children.size - 1) {
-      log.info("is ready! go ahead")
+      //      log.info("is ready! go ahead")
       isReady = true
       unstashAll()
     } else {
@@ -126,6 +125,7 @@ class RegisterSync(initState: InitState) extends QuideActor with Stash {
   }
 
   def publishTask(task: Execute): Unit = {
+    log.info(s"Task: ${task.taskNo}, task ${task.action}")
     context.children.foreach(_ ! task)
     no += 1
     isReady = false

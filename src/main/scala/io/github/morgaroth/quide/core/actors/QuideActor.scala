@@ -19,7 +19,7 @@ trait QStateBase extends QuideActor {
 
   var amplitude: QValue = _
   var currentNo: Long = -1
-  val deadAmplitude = 0.01d
+  val deadAmplitude = 0.0001d
 
   def findOpposedState(index: Int): (Char, String) = {
     if (index >= myName.length) throw new RuntimeException(s"illegal size index $index my name $myName, ${myName.length}")
@@ -30,12 +30,12 @@ trait QStateBase extends QuideActor {
 
 
   //
-  //  def ShallIDead() = {
-  //    if (amplitude <= deadAmplitude) {
-  //      context stop self
-  //      true
-  //    } else false
-  //  }
+//    def ShallIDead() = {
+//      if (amplitude <= deadAmplitude) {
+//        context stop self
+//        true
+//      } else false
+//    }
 
   def ShallIDead() = false
 }

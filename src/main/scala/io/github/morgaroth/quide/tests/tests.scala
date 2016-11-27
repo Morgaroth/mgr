@@ -61,7 +61,7 @@ trait TestHelpers {
 
 
 object Helpers {
-  def checkUsedMemory = {
+  def usedMemKB = {
     System.gc()
     System.gc()
     System.gc()
@@ -69,7 +69,12 @@ object Helpers {
     System.gc()
     System.gc()
     val r = Runtime.getRuntime
-    val l: Long = r.totalMemory() - r.freeMemory()
+    val l = r.totalMemory() - r.freeMemory()
+    l / 1024
+  }
+
+  def checkUsedMemory = {
+    val l = usedMemKB
     s"(${l / 1024}kB, ${l / 1024 / 1024}MB)"
   }
 }
