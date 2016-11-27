@@ -1,7 +1,5 @@
 package io.github.morgaroth.quide.tests
 
-import java.io.{File => JFile}
-
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.{Logging, LoggingAdapter}
 import akka.pattern.ask
@@ -45,21 +43,6 @@ trait TestHelpers {
   }
 }
 
-
-//object HeavyMemoryTest {
-//
-//  def main(args: Array[String]) {
-//    val results = 1 to 1000 map { _ =>
-//      val start = Platform.currentTime
-//      val result = Await.result(MemoryTest.main(Array.empty), 10.seconds)
-//      assert(result.count(_._2.modulus > 0.68) == 2, "BAD BAD BAD!")
-//      Platform.currentTime - start
-//    }
-//    println((results.sum * 100.0 / results.size) / 100 toInt)
-//  }
-//}
-
-
 object Helpers {
   def usedMemKB = {
     System.gc()
@@ -101,7 +84,6 @@ case class RegisterActions(reg: ActorRef, size: Int)(implicit as: ActorSystem) {
     run(ControlledGate(X, 1 until size), 0)
     run(X, revertBits)
   }
-
 
   def runInversion(): Unit = {
     run(H, bank)
