@@ -6,7 +6,4 @@
 *.iml
 /run.py
 /plot_graphs.py
-/data/*.csv
-/data/*.png
-/data/*.svg
-*.data
+/data/*

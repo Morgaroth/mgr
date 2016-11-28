@@ -39,8 +39,9 @@ tester = 'io.github.morgaroth.quide.tests.TimeTest'
 repeats = 5
 
 for kind in kinds:
-    print('run {} with size {}'.format(kind, sizes))
-    run__command = 'sbt "run-main {0} {1} {2}"'.format(tester, kind, ' '.join(sizes))
-    print(run__command)
     for _ in range(0, repeats):
-        cmd(run__command)
+        for size in sizes:
+            print('run {} with size {}'.format(kind, size))
+            run__command = 'sbt "run-main {0} {1} {2}"'.format(tester, kind, size)
+            print(run__command)
+            cmd(run__command)
