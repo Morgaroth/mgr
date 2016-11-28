@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 
-from os import listdir, stat, chmod, getcwd, chdir
+from os import listdir, stat, chmod, getcwd, chdir, remove
 from stat import S_IEXEC
 from os import system as cmd
 
 plotTemplate = '''#!/usr/bin/env gnuplot
 
-set terminal svg fname 'Verdana' fsize 10
+set terminal svg fname 'Verdana' fsize 12
 set output '{fileName}.svg'
+
+# set terminal png size 960,720 font Verdana 10
+# set output '{fileName}.png'
 
 set datafile separator ","
 set title "{plotName}"
@@ -18,24 +21,23 @@ set key left top
 
 set xtics 1
 
-set xrange [3:15]
+set xrange [3:16]
 
-plot '<grep RegisterSync {dataFile}' using 2:3 with lines title "Sync" linetype 1, \\
-         "" using 2:3:5 with yerrorbars linetype 1 notitle, \\
-     '<grep RegisterOwn {dataFile}' using 2:3 with lines title "Own" linetype 2, \\
-         "" using 2:3:5 with yerrorbars linetype 2 notitle, \\
-     '<grep RegisterCustomMap {dataFile}' using 2:3 with lines title "Map" linetype 3, \\
-         "" using 2:3:5 with yerrorbars linetype 3 notitle
+plot '<grep RegisterSync {dataFile}' using 2:3 with {linesFormat} linecolor rgb 'red' title "Sync" , \\
+        "" using 2:3:5 with yerrorbars linecolor rgb 'red' pointtype 7 pointsize 0.1 notitle, \\
+     '<grep RegisterOwn {dataFile}' using 2:3 with {linesFormat} linecolor rgb 'blue' title "Own", \\
+        "" using 2:3:5 with yerrorbars linecolor rgb 'blue' pointtype 7 pointsize 0.1 notitle, \\
+     '<grep RegisterCustomMap {dataFile}' using 2:3 with {linesFormat} linecolor rgb 'green'  title "Map", \\
+        "" using 2:3:5 with yerrorbars linecolor rgb 'green' pointtype 7 pointsize 0.1 notitle
 '''
 
 origin = getcwd()
 cmd('sbt "run-main io.github.morgaroth.quide.utils.RefactorData"')
 
-scripts = [f for f in listdir('data/') if f.endswith('.gpt')]
-chdir('data')
-
 xLabel = 'Rozmiar rejestru w kubitach [n]'
 yLabel = 'Czas [ms]'
+
+linesFormat = 'linespoints pointtype 7 pointsize 0.5 lw 1'
 
 plots = [
     {
@@ -43,6 +45,7 @@ plots = [
         'dataFile': 'round-time.csv',
         'xLabel': xLabel,
         'yLabel': yLabel,
+        'linesFormat': linesFormat,
         'plotName': 'Wykres czasu wykonania jednej rundy',
     },
     {
@@ -50,6 +53,7 @@ plots = [
         'dataFile': 'execution-time.csv',
         'xLabel': xLabel,
         'yLabel': yLabel,
+        'linesFormat': linesFormat,
         'plotName': 'Wykres czasu symulacji algorytmu Grover\'a',
     },
     {
@@ -57,16 +61,28 @@ plots = [
         'dataFile': 'round-memory-usage.csv',
         'xLabel': xLabel,
         'yLabel': yLabel,
+        'linesFormat': linesFormat,
         'plotName': 'Wykres użycia pamięci',
     },
 ]
 
+chdir('data')
+
 for plot in plots:
     result = plotTemplate.format(**plot)
-    scriptFile = plot['fileName'] + '.gpt'
+    name = plot['fileName']
+    scriptFile = name + '.gpt'
     with open(scriptFile, 'w') as f:
         f.write(result)
     chmod(scriptFile, stat(scriptFile).st_mode | S_IEXEC)
+    cmd('./{}'.format(scriptFile))
+    cmd('inkscape -z -e {0}.png -h 2000 {0}.svg'.format(name))
 
-for script in scripts:
-    cmd('./{}'.format(script.replace(' ', "\ ")))
+clean = True
+# clean = False
+
+if clean:
+    for file in [f for f in listdir('.') if f.endswith('.gpt') or f.endswith('.csv') or f.endswith('.svg')]:
+        remove(file)
+
+chdir(origin)
