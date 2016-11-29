@@ -8,10 +8,10 @@ if len(argv) < 3:
     exit(-1)
 
 kindsDict = {
-    'own': 'io.github.morgaroth.quide.core.register.own.RegisterOwn',
+    # 'own': 'io.github.morgaroth.quide.core.register.own.RegisterOwn',
     'sync': 'io.github.morgaroth.quide.core.register.sync.RegisterSync',
     'ownterm': 'io.github.morgaroth.quide.core.register.own_terminated.RegisterOwnTerminated',
-    'nodeath': 'io.github.morgaroth.quide.core.register.nodeath.RegisterNoDeaths',
+    # 'nodeath': 'io.github.morgaroth.quide.core.register.nodeath.RegisterNoDeaths',
     'customap': 'io.github.morgaroth.quide.core.register.custom_map.RegisterCustomMap',
 }
 

@@ -25,9 +25,9 @@ set xrange [3:16]
 
 plot '<grep RegisterSync {dataFile}' using 2:3 with {linesFormat} linecolor rgb 'red' title "Sync" , \\
         "" using 2:3:5 with yerrorbars linecolor rgb 'red' pointtype 7 pointsize 0.1 notitle, \\
-     '<grep RegisterOwn {dataFile}' using 2:3 with {linesFormat} linecolor rgb 'blue' title "Own", \\
+     '<grep RegisterOwnTerminated {dataFile}' using 2:3 with {linesFormat} linecolor rgb 'blue' title "OwnTerminated", \\
         "" using 2:3:5 with yerrorbars linecolor rgb 'blue' pointtype 7 pointsize 0.1 notitle, \\
-     '<grep RegisterCustomMap {dataFile}' using 2:3 with {linesFormat} linecolor rgb 'green'  title "Map", \\
+     '<grep RegisterCustomMap {dataFile}' using 2:3 with {linesFormat} linecolor rgb 'green'  title "OwnMap", \\
         "" using 2:3:5 with yerrorbars linecolor rgb 'green' pointtype 7 pointsize 0.1 notitle
 '''
 
