@@ -4,6 +4,8 @@ version := "1.0"
 
 scalaVersion := "2.11.8"
 
+fork in run := false
+
 libraryDependencies ++= Seq(
   Spray.Routing.`1.3.3`,
   Spray.Can.`1.3.3`,

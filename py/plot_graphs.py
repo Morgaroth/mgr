@@ -79,7 +79,7 @@ for plot in plots:
     cmd('inkscape -z -e {0}.png -h 2000 {0}.svg'.format(name))
 
 clean = True
-# clean = False
+clean = False
 
 if clean:
     for file in [f for f in listdir('.') if f.endswith('.gpt') or f.endswith('.csv') or f.endswith('.svg')]:

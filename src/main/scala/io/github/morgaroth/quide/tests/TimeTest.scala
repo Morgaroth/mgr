@@ -32,6 +32,9 @@ object TimeTest extends TestHelpers {
     "io.github.morgaroth.quide.core.register.sync.RegisterSync" -> RegisterSync.props _
   )
 
+
+  val predefinedEffectiveRounds = Map(5 -> 9, 6 -> 4, 7 -> 6, 8 -> 8, 9 -> 11, 10 -> 16, 11 -> 22, 12 -> 32, 13 -> 45, 14 -> 63)
+
   def doTest(registerName: String, registerSize: Int) {
     def saveVal(name: String, value: Double) = saveValue(name, registerName, registerSize, value)
 
@@ -39,7 +42,6 @@ object TimeTest extends TestHelpers {
     val reg = RegisterActions(as.actorOf(registers(registerName)(registerSize)), registerSize)
     val log = Logging(as, "test")
     log.warning("start")
-    var start = Platform.currentTime
     var execTime = 0L
     val problemSize = registerSize - 1
 
@@ -50,24 +52,16 @@ object TimeTest extends TestHelpers {
     Helpers.usedMemKB
     Thread.sleep(5.seconds.toMillis)
     val initMemory = Helpers.usedMemKB
+    var start = Platform.currentTime
     reg.run(X, 0)
     reg.runWalsh()
-    //      val walshed = getValue(reg)
-    //      val walshedTime = System.currentTimeMillis()
     println(getValueFrom(reg).toList.sortBy(_._2.modulus).takeRight(4).map(x => x._1 -> x._2.asString))
-
-    //      (0 to rounds toList) foreach { _ =>
-    //        reg.runOracle(oracledValue)
-    //        reg.runInversion()
-    //        println(getValueFrom(reg).toList.sortBy(_._2.modulus).takeRight(4).toString)
-    //      }
-
-    //      (0 to rounds toList) foreach { _ =>
     var end = true
     var roundsEffecctive = 0
     execTime += (Platform.currentTime - start)
+    //    while (roundsEffecctive < predefinedEffectiveRounds(registerSize)) {
     while (end) {
-      val start = Platform.currentTime
+      start = Platform.currentTime
       roundsEffecctive += 1
       reg.runOracle(oracledValue)
       reg.runInversion()
@@ -101,10 +95,10 @@ object TimeTest extends TestHelpers {
     val registerName = args.head
     val sizes: Iterable[Int] = if (args.tail.nonEmpty) args.tail.map(_.toInt) else 15 to 15 toList
 
-//    1 to 5 map { _ =>
-      sizes map { size =>
-        size -> doTest(registerName, size)
-      }
-//    }
+    //    1 to 5 map { _ =>
+    sizes map { size =>
+      size -> doTest(registerName, size)
+    }
+    //    }
   }
 }
