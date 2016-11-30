@@ -22,7 +22,7 @@ import scala.language.{implicitConversions, postfixOps}
   * Created by morgaroth on 19.11.16.
   */
 object TimeTest extends TestHelpers {
-  implicit val tm: Timeout = 2.minutes
+  implicit val tm: Timeout = 1.hour
 
   val registers: Map[String, Int => Props] = Map(
     "io.github.morgaroth.quide.core.register.own.RegisterOwn" -> RegisterOwn.props _,
@@ -33,7 +33,7 @@ object TimeTest extends TestHelpers {
   )
 
 
-  val predefinedEffectiveRounds = Map(5 -> 9, 6 -> 4, 7 -> 6, 8 -> 8, 9 -> 11, 10 -> 16, 11 -> 22, 12 -> 32, 13 -> 45, 14 -> 63)
+  val predefinedEffectiveRounds = Map(5 -> 9, 6 -> 4, 7 -> 6, 8 -> 8, 9 -> 11, 10 -> 16, 11 -> 22, 12 -> 32, 13 -> 45, 14 -> 63, 15 -> 89)
 
   def doTest(registerName: String, registerSize: Int) {
     def saveVal(name: String, value: Double) = saveValue(name, registerName, registerSize, value)
@@ -55,38 +55,38 @@ object TimeTest extends TestHelpers {
     var start = Platform.currentTime
     reg.run(X, 0)
     reg.runWalsh()
-    println(getValueFrom(reg).toList.sortBy(_._2.modulus).takeRight(4).map(x => x._1 -> x._2.asString))
-    var end = true
+    //    println(getValueFrom(reg).toList.sortBy(_._2.modulus).takeRight(4).map(x => x._1 -> x._2.asString))
+    //    var end = true
     var roundsEffecctive = 0
-    execTime += (Platform.currentTime - start)
-    //    while (roundsEffecctive < predefinedEffectiveRounds(registerSize)) {
-    while (end) {
-      start = Platform.currentTime
+    //    execTime += (Platform.currentTime - start)
+    while (roundsEffecctive < predefinedEffectiveRounds(registerSize)) {
+      //    while (end) {
+      //      start = Platform.currentTime
       roundsEffecctive += 1
       reg.runOracle(oracledValue)
       reg.runInversion()
-      val values = getValueFrom(reg).toList.sortBy(_._2.modulus)
-      val roundTime = Platform.currentTime - start
-      execTime += roundTime
-      saveVal("round-time", roundTime)
-      saveVal("round-memory-usage", Helpers.usedMemKB - initMemory)
-      if (values.takeRight(2).map(_._2.modulus).map(x => x * x).sum > 0.97) {
-        log.warning(s"End, effective rounds $roundsEffecctive for problem qbits $problemSize")
-        saveVal("effective-rounds", roundsEffecctive)
-        end = false
-      }
-      println(values.takeRight(4).map(x => (x._1, x._2.toString())))
+      //      val values = getValueFrom(reg).toList.sortBy(_._2.modulus)
+      //      val roundTime = Platform.currentTime - start
+      //      execTime += roundTime
+      //      saveVal("round-time", roundTime)
+      //      saveVal("round-memory-usage", Helpers.usedMemKB - initMemory)
+      //      if (values.takeRight(2).map(_._2.modulus).map(x => x * x).sum > 0.97) {
+      //        log.warning(s"End, effective rounds $roundsEffecctive for problem qbits $problemSize")
+      //        saveVal("effective-rounds", roundsEffecctive)
+      //        end = false
+      //      }
+      //      println(values.takeRight(4).map(x => (x._1, x._2.toString())))
     }
-    start = Platform.currentTime
+    //    start = Platform.currentTime
     val values: List[(String, QValue, Double)] = getValueFrom(reg).toList.sortBy(_._2.modulus).map(x => (x._1, x._2, (x._2.modulus * x._2.modulus * 10000).toInt / 100.0))
     //      values.foreach(println)
+    execTime += (Platform.currentTime - start)
     val propSum = values.map(x => x._2.modulus * x._2.modulus).sum
     log.warning(s"${values.takeRight(5).toString} results ${values.size}, propSum $propSum")
-    execTime += (Platform.currentTime - start)
     log.error("stopping this shit")
     //      log.error(s"stopping ${Await.result(gracefulStop(reg.reg, 4 minutes), 5 minutes)}")
     as.stop(reg.reg)
-    saveVal("execution-time", execTime)
+    saveVal("execution-time-total", execTime)
     Await.result(as.terminate(), 1 minute)
     //    times * 1.0 / 5
   }

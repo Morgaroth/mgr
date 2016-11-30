@@ -15,13 +15,13 @@ object RefactorData {
       val mean = data.sum / n
       val deriveration = sqrt(data.map(_ - mean).map(x => pow(x, 2)).sum / (n - 1))
       val error = deriveration / sqrt(n)
-      List(mean, deriveration, error)
+      List(mean, deriveration, error, data.min)
     }
   }
 
 
   def main(args: Array[String]): Unit = {
-    val dataFile = pwd / "data.data"
+    val dataFile = if (args.nonEmpty) pwd / args.head else pwd / "data.data"
     val data = dataFile.lines.map(_.split(":").toList).toList
     val types = data.groupBy(_.head).mapValues(_.map(_.tail))
     val fullParsedData = types.mapValues { da =>
