@@ -15,7 +15,8 @@ object RefactorData {
       val mean = data.sum / n
       val deriveration = sqrt(data.map(_ - mean).map(x => pow(x, 2)).sum / (n - 1))
       val error = deriveration / sqrt(n)
-      List(mean, deriveration, error, data.min)
+      val minimum = data.filter(v => v >= (mean - deriveration)).min
+      List(mean, deriveration, error, minimum)
     }
   }
 

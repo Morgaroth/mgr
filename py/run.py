@@ -10,7 +10,9 @@ if len(argv) < 3:
 
 kinds = []
 sizes = []
-tester = 'io.github.morgaroth.quide.tests.TimeTest'
+# tester = 'io.github.morgaroth.quide.tests.TimeTest'
+# tester = 'io.github.morgaroth.quide.tests.TimeTest2'
+tester = 'io.github.morgaroth.quide.tests.TimeTest3'
 repeats = 5
 kindsDict = {
     # 'own': 'io.github.morgaroth.quide.core.register.own.RegisterOwn',

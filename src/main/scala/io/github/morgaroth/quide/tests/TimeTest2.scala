@@ -19,7 +19,7 @@ import scala.language.{implicitConversions, postfixOps}
 /**
   * Created by morgaroth on 19.11.16.
   */
-object TimeTest extends TestHelpers {
+object TimeTest2 extends TestHelpers {
   implicit val tm: Timeout = 1.hour
 
   val registers: Map[String, Int => Props] = Map(
@@ -41,20 +41,38 @@ object TimeTest extends TestHelpers {
     val log = Logging(as, "test")
     log.warning("start")
     var execTime = 0L
+    val problemSize = registerSize - 1
     val rounds = (math.Pi / 4 * registerSize).toInt
     val oracledValue = 2
     log.warning(s"grovering $oracledValue using $rounds rounds for size $registerSize")
     Helpers.usedMemKB
     Thread.sleep(5.seconds.toMillis)
-    val start = Platform.currentTime
+    val initMemory = Helpers.usedMemKB
+    var start = Platform.currentTime
     reg.run(X, 0)
     reg.runWalsh()
+    println(getValueFrom(reg).toList.sortBy(_._2.modulus).takeRight(4).map(x => x._1 -> x._2.asString))
+    var end = true
     var roundsEffecctive = 0
-    while (roundsEffecctive < predefinedEffectiveRounds(registerSize)) {
+    execTime += (Platform.currentTime - start)
+    while (end) {
+      start = Platform.currentTime
       roundsEffecctive += 1
       reg.runOracle(oracledValue)
       reg.runInversion()
+      val values = getValueFrom(reg).toList.sortBy(_._2.modulus)
+      val roundTime = Platform.currentTime - start
+      execTime += roundTime
+      saveVal("round-time", roundTime)
+      saveVal("round-memory-usage", Helpers.usedMemKB - initMemory)
+      if (values.takeRight(2).map(_._2.modulus).map(x => x * x).sum > 0.97) {
+        log.warning(s"End, effective rounds $roundsEffecctive for problem qbits $problemSize")
+        saveVal("effective-rounds", roundsEffecctive)
+        end = false
+      }
+      println(values.takeRight(4).map(x => (x._1, x._2.toString())))
     }
+    start = Platform.currentTime
     val values: List[(String, QValue, Double)] = getValueFrom(reg).toList.sortBy(_._2.modulus).map(x => (x._1, x._2, (x._2.modulus * x._2.modulus * 10000).toInt / 100.0))
     execTime += (Platform.currentTime - start)
     val propSum = values.map(x => x._2.modulus * x._2.modulus).sum

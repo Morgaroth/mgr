@@ -19,7 +19,7 @@ import scala.language.{implicitConversions, postfixOps}
 /**
   * Created by morgaroth on 19.11.16.
   */
-object TimeTest extends TestHelpers {
+object TimeTest3 extends TestHelpers {
   implicit val tm: Timeout = 1.hour
 
   val registers: Map[String, Int => Props] = Map(
@@ -30,9 +30,6 @@ object TimeTest extends TestHelpers {
     "io.github.morgaroth.quide.core.register.sync.RegisterSync" -> RegisterSync.props _
   )
 
-
-  val predefinedEffectiveRounds = Map(5 -> 9, 6 -> 4, 7 -> 6, 8 -> 8, 9 -> 11, 10 -> 16, 11 -> 22, 12 -> 32, 13 -> 45, 14 -> 63, 15 -> 89)
-
   def doTest(registerName: String, registerSize: Int) {
     def saveVal(name: String, value: Double) = saveValue(name, registerName, registerSize, value)
 
@@ -40,28 +37,30 @@ object TimeTest extends TestHelpers {
     val reg = RegisterActions(as.actorOf(registers(registerName)(registerSize)), registerSize)
     val log = Logging(as, "test")
     log.warning("start")
-    var execTime = 0L
+    val problemSize = registerSize - 1
     val rounds = (math.Pi / 4 * registerSize).toInt
     val oracledValue = 2
     log.warning(s"grovering $oracledValue using $rounds rounds for size $registerSize")
     Helpers.usedMemKB
     Thread.sleep(5.seconds.toMillis)
-    val start = Platform.currentTime
+    val initMemory = Helpers.usedMemKB
+    var start = Platform.currentTime
     reg.run(X, 0)
     reg.runWalsh()
-    var roundsEffecctive = 0
-    while (roundsEffecctive < predefinedEffectiveRounds(registerSize)) {
-      roundsEffecctive += 1
+    println(getValueFrom(reg).toList.sortBy(_._2.modulus).takeRight(4).map(x => x._1 -> x._2.asString))
+    1 until 5 foreach { _ =>
+      start = Platform.currentTime
       reg.runOracle(oracledValue)
       reg.runInversion()
+      val values = getValueFrom(reg).toList.sortBy(_._2.modulus)
+      val roundTime = Platform.currentTime - start
+      saveVal("round-time", roundTime)
+      saveVal("round-memory-usage", Helpers.usedMemKB - initMemory)
+      println(values.takeRight(4).map(x => (x._1, x._2.toString())))
     }
     val values: List[(String, QValue, Double)] = getValueFrom(reg).toList.sortBy(_._2.modulus).map(x => (x._1, x._2, (x._2.modulus * x._2.modulus * 10000).toInt / 100.0))
-    execTime += (Platform.currentTime - start)
-    val propSum = values.map(x => x._2.modulus * x._2.modulus).sum
-    log.warning(s"${values.takeRight(5).toString} results ${values.size}, propSum $propSum")
     log.error("stopping this shit")
     as.stop(reg.reg)
-    saveVal("execution-time-total", execTime)
     Await.result(as.terminate(), 1 minute)
   }
 
