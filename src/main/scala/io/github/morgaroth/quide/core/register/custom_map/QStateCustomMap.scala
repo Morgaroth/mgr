@@ -90,7 +90,7 @@ class QStateCustomMap extends QStateBase with Stash {
       //      loginfo(s"stashing $m")
       stash()
     case Ping =>
-      parent ! Ready
+      parent ! ReadyOwn(myName)
     case z =>
       log.error(s"received illegal dowork no ($currentNo) $z")
   }

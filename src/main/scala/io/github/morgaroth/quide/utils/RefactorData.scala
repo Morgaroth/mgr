@@ -4,6 +4,7 @@ import better.files.Cmds._
 
 import scala.language.{implicitConversions, reflectiveCalls}
 import scala.math.{pow, sqrt}
+import scala.util.Try
 
 /**
   * Created by morgaroth on 27.11.16.
@@ -15,7 +16,7 @@ object RefactorData {
       val mean = data.sum / n
       val deriveration = sqrt(data.map(_ - mean).map(x => pow(x, 2)).sum / (n - 1))
       val error = deriveration / sqrt(n)
-      val minimum = data.filter(v => v >= (mean - deriveration)).min
+      val minimum = Try(data.filter(v => v >= (mean - deriveration)).min).getOrElse(0d)
       List(mean, deriveration, error, minimum)
     }
   }

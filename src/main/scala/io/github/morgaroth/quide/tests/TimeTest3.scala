@@ -11,6 +11,7 @@ import io.github.morgaroth.quide.core.register.own.RegisterOwn
 import io.github.morgaroth.quide.core.register.own_terminated.RegisterOwnTerminated
 import io.github.morgaroth.quide.core.register.sync.RegisterSync
 
+import scala.collection.immutable.Seq
 import scala.compat.Platform
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -44,21 +45,16 @@ object TimeTest3 extends TestHelpers {
     Helpers.usedMemKB
     Thread.sleep(5.seconds.toMillis)
     val initMemory = Helpers.usedMemKB
-    var start = Platform.currentTime
     reg.run(X, 0)
     reg.runWalsh()
-    println(getValueFrom(reg).toList.sortBy(_._2.modulus).takeRight(4).map(x => x._1 -> x._2.asString))
-    1 until 5 foreach { _ =>
-      start = Platform.currentTime
-      reg.runOracle(oracledValue)
-      reg.runInversion()
-      val values = getValueFrom(reg).toList.sortBy(_._2.modulus)
-      val roundTime = Platform.currentTime - start
-      saveVal("round-time", roundTime)
-      saveVal("round-memory-usage", Helpers.usedMemKB - initMemory)
-      println(values.takeRight(4).map(x => (x._1, x._2.toString())))
-    }
-    val values: List[(String, QValue, Double)] = getValueFrom(reg).toList.sortBy(_._2.modulus).map(x => (x._1, x._2, (x._2.modulus * x._2.modulus * 10000).toInt / 100.0))
+    getValueFrom(reg)
+    val start = Platform.currentTime
+    reg.runOracle(oracledValue)
+    reg.runInversion()
+    getValueFrom(reg)
+    val roundTime = Platform.currentTime - start
+    saveVal("round-time", roundTime)
+    saveVal("round-memory-usage", Helpers.usedMemKB - initMemory)
     log.error("stopping this shit")
     as.stop(reg.reg)
     Await.result(as.terminate(), 1 minute)

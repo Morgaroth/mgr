@@ -116,7 +116,7 @@ class RegisterCustomMap(initState: InitState) extends QuideActor with Stash {
 
   def scheduleCheck() {
     Option(call).foreach(_.cancel())
-    call = context.system.scheduler.scheduleOnce(1.second, self, CHECK)
+    call = context.system.scheduler.scheduleOnce(5.seconds, self, CHECK)
   }
 
   override def receive: Receive = {
