@@ -31,11 +31,11 @@ plotTemplate = plotTemplateBase + '''
 set output '{fileName}.svg'
 
 plot '<grep RegisterSync {dataFile}' using 2:3 with {linesFormat} linecolor rgb 'red' title "Sync", \\
-        "" using 2:3:5 with yerrorbars linecolor rgb 'red' pointtype 7 pointsize 0.1 notitle, \\
+        "" using 2:3:{err_index} with yerrorbars linecolor rgb 'red' pointtype 7 pointsize 0.1 notitle, \\
      '<grep RegisterOwnTerminated {dataFile}' using 2:3 with {linesFormat} linecolor rgb 'blue' title "OwnTerminated", \\
-        "" using 2:3:5 with yerrorbars linecolor rgb 'blue' pointtype 7 pointsize 0.1 notitle, \\
+        "" using 2:3:{err_index} with yerrorbars linecolor rgb 'blue' pointtype 7 pointsize 0.1 notitle, \\
      '<grep RegisterCustomMap {dataFile}' using 2:3 with {linesFormat} linecolor rgb 'green' title "OwnMap", \\
-        "" using 2:3:5 with yerrorbars linecolor rgb 'green' pointtype 7 pointsize 0.1 notitle
+        "" using 2:3:{err_index} with yerrorbars linecolor rgb 'green' pointtype 7 pointsize 0.1 notitle
 '''
 
 comparePlotTemplate = plotTemplateBase + '''
@@ -55,19 +55,23 @@ cmd('sbt "run-main io.github.morgaroth.quide.utils.RefactorData {}"'.format(data
 xLabel = 'Rozmiar rejestru w kubitach [n]'
 yLabel = 'Czas [ms]'
 
+err_index = '5'
+
 linesFormat = 'points pointtype 7 pointsize 0.5 lw 1'
 
 comparePlot = {'xLabel': xLabel, 'yLabel': yLabel, 'linesFormat': linesFormat, 'plotName': 'Wykres porównania'}
 
-roundTimePlot = {'fileName': 'RoundTime', 'dataFile': 'round-time.csv', 'xLabel': xLabel, 'yLabel': yLabel,
-                 'linesFormat': linesFormat, 'plotName': 'Wykres czasu wykonania jednej iteracji algorytmu Grover\'a',
-                 'range': '4:21'}
+roundTimePlot = {'fileName': 'RoundTime', 'err_index': err_index, 'dataFile': 'round-time.csv', 'xLabel': xLabel,
+                 'yLabel': yLabel, 'linesFormat': linesFormat, 'range': '4:21',
+                 'plotName': 'Wykres czasu wykonania jednej iteracji algorytmu Grover\'a'}
 
-execTimePlot = {'fileName': 'ExecutionTime', 'dataFile': 'execution-time.csv', 'xLabel': xLabel, 'yLabel': yLabel,
-                'linesFormat': linesFormat, 'plotName': 'Wykres czasu symulacji algorytmu Grover\'a', 'range': '4:16'}
+execTimePlot = {'fileName': 'ExecutionTime', 'err_index': err_index, 'dataFile': 'execution-time.csv', 'xLabel': xLabel,
+                'yLabel': yLabel, 'linesFormat': linesFormat, 'plotName': 'Wykres czasu symulacji algorytmu Grover\'a',
+                'range': '4:16'}
 
-memoryUsagePlot = {'fileName': 'MemoryUsage', 'dataFile': 'round-memory-usage.csv', 'xLabel': xLabel, 'range': '4:21',
-                   'yLabel': 'Użycie pamięci [kB]', 'linesFormat': linesFormat, 'plotName': 'Wykres użycia pamięci'}
+memoryUsagePlot = {'fileName': 'MemoryUsage', 'err_index': err_index, 'dataFile': 'round-memory-usage.csv',
+                   'xLabel': xLabel, 'range': '4:21', 'yLabel': 'Użycie pamięci [kB]', 'linesFormat': linesFormat,
+                   'plotName': 'Wykres użycia pamięci'}
 
 execTimePlotFull = execTimePlot.copy()
 execTimePlotFull.update({'fileName': execTimePlot['fileName'] + '-NoBreaks', 'dataFile': 'execution-time-total.csv'})
